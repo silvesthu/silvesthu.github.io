@@ -2,30 +2,30 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Indefinite Seven</title>
-    <link>/</link>
+    <link>https://silvesthu.github.io/</link>
     <description>Recent content on Indefinite Seven</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Mon, 13 Jan 2020 20:30:45 +0900</lastBuildDate>
     
-	<atom:link href="/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://silvesthu.github.io/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>Reading Lists</title>
-      <link>/readinglists/</link>
+      <link>https://silvesthu.github.io/readinglists/</link>
       <pubDate>Mon, 13 Jan 2020 20:30:45 +0900</pubDate>
       
-      <guid>/readinglists/</guid>
+      <guid>https://silvesthu.github.io/readinglists/</guid>
       <description>GameDev  GPU Optimization on gist Graphics Introduction on gist  </description>
     </item>
     
     <item>
       <title>Hi</title>
-      <link>/posts/2020/01/hi/</link>
+      <link>https://silvesthu.github.io/posts/2020/01/hi/</link>
       <pubDate>Sun, 12 Jan 2020 04:11:40 +0900</pubDate>
       
-      <guid>/posts/2020/01/hi/</guid>
+      <guid>https://silvesthu.github.io/posts/2020/01/hi/</guid>
       <description></description>
     </item>
     
