@@ -3,31 +3,42 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>https://silvesthu.github.io/tags/directx-12/</loc>
+    <lastmod>2020-05-09T00:51:14+09:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://silvesthu.github.io/</loc>
-    <lastmod>2020-01-13T20:30:45+09:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://silvesthu.github.io/readinglists/</loc>
-    <lastmod>2020-01-13T20:30:45+09:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://silvesthu.github.io/posts/2020/01/hi/</loc>
-    <lastmod>2020-01-12T04:11:40+09:00</lastmod>
+    <lastmod>2020-05-09T00:51:14+09:00</lastmod>
   </url>
   
   <url>
     <loc>https://silvesthu.github.io/posts/</loc>
-    <lastmod>2020-01-12T04:11:40+09:00</lastmod>
+    <lastmod>2020-05-09T00:51:14+09:00</lastmod>
   </url>
   
   <url>
-    <loc>https://silvesthu.github.io/categories/</loc>
+    <loc>https://silvesthu.github.io/tags/shader-analayzer/</loc>
+    <lastmod>2020-05-09T00:51:14+09:00</lastmod>
   </url>
   
   <url>
     <loc>https://silvesthu.github.io/tags/</loc>
+    <lastmod>2020-05-09T00:51:14+09:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://silvesthu.github.io/tags/wave-intrinsics/</loc>
+    <lastmod>2020-05-09T00:51:14+09:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://silvesthu.github.io/posts/2020/05/wave-intrinsics-hello-world/</loc>
+    <lastmod>2020-05-09T00:51:14+09:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://silvesthu.github.io/categories/</loc>
   </url>
   
 </urlset>

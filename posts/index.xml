@@ -5,17 +5,121 @@
         <description>Recent content in Posts on Indefinite Seven</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>en-us</language>
-        <lastBuildDate>Sun, 12 Jan 2020 04:11:40 +0900</lastBuildDate>
+        <lastBuildDate>Sat, 09 May 2020 00:51:14 +0900</lastBuildDate>
         <atom:link href="https://silvesthu.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
         
         <item>
-            <title>Hi</title>
-            <link>https://silvesthu.github.io/posts/2020/01/hi/</link>
-            <pubDate>Sun, 12 Jan 2020 04:11:40 +0900</pubDate>
+            <title>Wave Intrinsics Hello World</title>
+            <link>https://silvesthu.github.io/posts/2020/05/wave-intrinsics-hello-world/</link>
+            <pubDate>Sat, 09 May 2020 00:51:14 +0900</pubDate>
             
-            <guid>https://silvesthu.github.io/posts/2020/01/hi/</guid>
-            <description></description>
-            <content type="html"><![CDATA[]]></content>
+            <guid>https://silvesthu.github.io/posts/2020/05/wave-intrinsics-hello-world/</guid>
+            <description>After work with DirectX 12 for a while,
+with some need to validate shader using Wave Intrinsics,
+I wrote a hello world as a playground.
+To keep things simple, here are some decisions made in advance.
+ Wave Intrinsics  DirectX 12 Shader Model 6.0+  DirectXShaderCompiler (DXC)     Minimal setup  Console program  No window No swapchain No render loop   Compute Shader only No descriptor heap Minimum abstraction No error handling (except shader compilation)   Debugging  Read back output through UAV printf    Result Here is the repo ComputeShaderPlayground on Github.</description>
+            <content type="html"><![CDATA[<p>After work with DirectX 12 for a while,<br>
+with some need to validate shader using <a href="https://github.com/Microsoft/DirectXShaderCompiler/wiki/Wave-Intrinsics"><strong>Wave Intrinsics</strong></a>,<br>
+I wrote a hello world as a playground.</p>
+<p>To keep things simple, here are some decisions made in advance.</p>
+<ul>
+<li>Wave Intrinsics
+<ul>
+<li>DirectX 12</li>
+<li>Shader Model 6.0+
+<ul>
+<li>DirectXShaderCompiler (DXC)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Minimal setup
+<ul>
+<li>Console program
+<ul>
+<li>No window</li>
+<li>No swapchain</li>
+<li>No render loop</li>
+</ul>
+</li>
+<li>Compute Shader only</li>
+<li>No descriptor heap</li>
+<li>Minimum abstraction</li>
+<li>No error handling (except shader compilation)</li>
+</ul>
+</li>
+<li>Debugging
+<ul>
+<li>Read back output through UAV</li>
+<li>printf</li>
+</ul>
+</li>
+</ul>
+<h3 id="result">Result</h3>
+<p>Here is the repo <a href="https://github.com/silvesthu/ComputeShaderPlayground">ComputeShaderPlayground</a> on Github.<br>
+With only a cpp and a hlsl each.<br>
+Suprisingly, console program run just well.</p>
+<p>The hlsl is just a placeholder, and structure of cpp is like</p>
+<ul>
+<li>Compile shader file to <code>IDxcBlob</code></li>
+<li>Initialize DirectX 12 with <code>IDXGIFactory4</code> -&gt; <code>IDXGIAdapter1</code> -&gt; <code>ID3D12Device2</code></li>
+<li>Create resources with <code>ID3D12Device2</code>
+<ul>
+<li><code>ID3D12CommandQueue</code></li>
+<li><code>ID3D12CommandAllocator</code></li>
+<li><code>ID3D12GraphicsCommandList</code></li>
+<li><code>ID3D12RootSignature</code> -&gt; <code>ID3D12PipelineState</code></li>
+<li><code>ID3D12Resource</code> as UAV</li>
+<li><code>ID3D12Resource</code> as Readback</li>
+</ul>
+</li>
+<li>Execute
+<ul>
+<li><code>SetComputeRootSignature</code></li>
+<li><code>SetPipelineState</code></li>
+<li><code>Dispatch</code></li>
+<li>Copy UAV to Readback</li>
+</ul>
+</li>
+<li>Print
+<ul>
+<li>Wait for GPU with <code>ID3D12Fence</code></li>
+<li>Lock Readback and print its content</li>
+</ul>
+</li>
+</ul>
+<h3 id="disassembly--shader-analayzer">Disassembly &amp; Shader Analayzer</h3>
+<p>Not quite related to the hello world itself though,<br>
+it is rather useful (also fun) to see how code is generated.<br>
+To be able to throw shader file directly into analyzer,<br>
+root signature is moved from cpp into HLSL.</p>
+<p><a href="http://shader-playground.timjones.io/">Shader Playground</a> provides most functionalities,<br>
+however it does not support shader analyzers for Shader Model 6.0+ yet.</p>
+<p><a href="https://github.com/jbarczak/pyramid">Pyramid</a> is another choice.<br>
+But as RGA requires AMD card for DX12 analysis,<br>
+it turn to offline mode for Vulkan with HLSL-&gt;SPIR-V which may not reflect original code.</p>
+<h3 id="reference">Reference</h3>
+<ul>
+<li><a href="https://github.com/microsoft/DirectX-Graphics-Samples">DirectX-Graphics-Samples</a>
+<ul>
+<li>Official samples by features</li>
+<li>Abstraction and error handling make code difficult to read</li>
+</ul>
+</li>
+<li><a href="https://www.3dgep.com/learning-directx-12-1">Learning DirectX 12 – Lesson 1 – Initialize DirectX 12</a>
+<ul>
+<li>A thorough tutorial (even topics like resize, fullscreen, dpi are well covered)</li>
+<li>A bit too long for lesson 1</li>
+</ul>
+</li>
+<li><a href="https://asawicki.info/news_1719_two_shader_compilers_of_direct3d_12">Two Shader Compilers of Direct3D 12</a>
+<ul>
+<li>Usage of dxc and fxc, both online and offline</li>
+</ul>
+</li>
+</ul>
+]]></content>
         </item>
         
     </channel>

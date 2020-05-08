@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="author" content="Ken Hu ">
+<meta name="description" content="After work with DirectX 12 for a while,
+with some need to validate shader using Wave Intrinsics,
+I wrote a hello world as a playground.
+To keep things simple, here are some decisions made in advance.
+ Wave Intrinsics  DirectX 12 Shader Model 6.0&#43;  DirectXShaderCompiler (DXC)     Minimal setup  Console program  No window No swapchain No render loop   Compute Shader only No descriptor heap Minimum abstraction No error handling (except shader compilation)   Debugging  Read back output through UAV printf    Result Here is the repo ComputeShaderPlayground on Github." />
+<meta name="keywords" content="blog, graphics, game, programming" />
+<meta name="robots" content="noodp" />
+<meta name="theme-color" content="" />
+<link rel="canonical" href="https://silvesthu.github.io/posts/2020/05/wave-intrinsics-hello-world/" />
+
+
+    <title>
+        
+            Wave Intrinsics Hello World :: Indefinite Seven 
+        
+    </title>
+
+
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.2.1/css/flag-icon.min.css" rel="stylesheet"
+    type="text/css">
+
+
+
+<link rel="stylesheet" href="/main.min.7bfbbe12786fa0ded4b4c0d792cbb36a5bd0bdb0b856dde57aa7b1f6fe0f2b87.css">
+
+
+
+
+<meta itemprop="name" content="Wave Intrinsics Hello World">
+<meta itemprop="description" content="After work with DirectX 12 for a while,
+with some need to validate shader using Wave Intrinsics,
+I wrote a hello world as a playground.
+To keep things simple, here are some decisions made in advance.
+ Wave Intrinsics  DirectX 12 Shader Model 6.0&#43;  DirectXShaderCompiler (DXC)     Minimal setup  Console program  No window No swapchain No render loop   Compute Shader only No descriptor heap Minimum abstraction No error handling (except shader compilation)   Debugging  Read back output through UAV printf    Result Here is the repo ComputeShaderPlayground on Github.">
+<meta itemprop="datePublished" content="2020-05-09T00:51:14&#43;09:00" />
+<meta itemprop="dateModified" content="2020-05-09T00:51:14&#43;09:00" />
+<meta itemprop="wordCount" content="308">
+<meta itemprop="image" content="https://silvesthu.github.io/"/>
+
+
+
+<meta itemprop="keywords" content="DirectX 12,Wave Intrinsics,Shader Analayzer," /><meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://silvesthu.github.io/"/>
+
+<meta name="twitter:title" content="Wave Intrinsics Hello World"/>
+<meta name="twitter:description" content="After work with DirectX 12 for a while,
+with some need to validate shader using Wave Intrinsics,
+I wrote a hello world as a playground.
+To keep things simple, here are some decisions made in advance.
+ Wave Intrinsics  DirectX 12 Shader Model 6.0&#43;  DirectXShaderCompiler (DXC)     Minimal setup  Console program  No window No swapchain No render loop   Compute Shader only No descriptor heap Minimum abstraction No error handling (except shader compilation)   Debugging  Read back output through UAV printf    Result Here is the repo ComputeShaderPlayground on Github."/>
+
+
+
+
+
+    <meta property="article:published_time" content="2020-05-09 00:51:14 &#43;0900 JST" />
+
+
+
+
+
+
+
+
+    </head>
+
+    <body class="dark-theme">
+        <div class="container">
+            <header class="header">
+    <span class="header__inner">
+        <a href="/" style="text-decoration: none;">
+    <div class="logo">
+        
+            <span class="logo__mark">></span>
+            <span class="logo__text">Indefinite Seven</span>
+            <span class="logo__cursor" style=""></span>
+        
+    </div>
+</a>
+
+
+        <span class="header__right">
+            
+            
+                <span>
+                    &nbsp; <a href="https://twitter.com/kenhu07" target="_blank" rel="noopener" title="Twitter"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg></a> &nbsp;&nbsp; <a href="https://github.com/silvesthu" target="_blank" rel="noopener" title="Github"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a> &nbsp;
+                </span>
+
+            
+
+        </span>
+    </span>
+</header>
+
+
+            <div class="content">
+                
+    <main class="post">
+
+        <div class="post-info">
+            <p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-clock"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>2 minutes
+
+            
+
+            </p>
+        </div>
+
+        <article>
+            <h1 class="post-title">
+                <a href="https://silvesthu.github.io/posts/2020/05/wave-intrinsics-hello-world/">Wave Intrinsics Hello World</a>
+            </h1>
+
+            
+
+            <div class="post-content">
+                <p>After work with DirectX 12 for a while,<br>
+with some need to validate shader using <a href="https://github.com/Microsoft/DirectXShaderCompiler/wiki/Wave-Intrinsics"><strong>Wave Intrinsics</strong></a>,<br>
+I wrote a hello world as a playground.</p>
+<p>To keep things simple, here are some decisions made in advance.</p>
+<ul>
+<li>Wave Intrinsics
+<ul>
+<li>DirectX 12</li>
+<li>Shader Model 6.0+
+<ul>
+<li>DirectXShaderCompiler (DXC)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Minimal setup
+<ul>
+<li>Console program
+<ul>
+<li>No window</li>
+<li>No swapchain</li>
+<li>No render loop</li>
+</ul>
+</li>
+<li>Compute Shader only</li>
+<li>No descriptor heap</li>
+<li>Minimum abstraction</li>
+<li>No error handling (except shader compilation)</li>
+</ul>
+</li>
+<li>Debugging
+<ul>
+<li>Read back output through UAV</li>
+<li>printf</li>
+</ul>
+</li>
+</ul>
+<h3 id="result">Result</h3>
+<p>Here is the repo <a href="https://github.com/silvesthu/ComputeShaderPlayground">ComputeShaderPlayground</a> on Github.<br>
+With only a cpp and a hlsl each.<br>
+Suprisingly, console program run just well.</p>
+<p>The hlsl is just a placeholder, and structure of cpp is like</p>
+<ul>
+<li>Compile shader file to <code>IDxcBlob</code></li>
+<li>Initialize DirectX 12 with <code>IDXGIFactory4</code> -&gt; <code>IDXGIAdapter1</code> -&gt; <code>ID3D12Device2</code></li>
+<li>Create resources with <code>ID3D12Device2</code>
+<ul>
+<li><code>ID3D12CommandQueue</code></li>
+<li><code>ID3D12CommandAllocator</code></li>
+<li><code>ID3D12GraphicsCommandList</code></li>
+<li><code>ID3D12RootSignature</code> -&gt; <code>ID3D12PipelineState</code></li>
+<li><code>ID3D12Resource</code> as UAV</li>
+<li><code>ID3D12Resource</code> as Readback</li>
+</ul>
+</li>
+<li>Execute
+<ul>
+<li><code>SetComputeRootSignature</code></li>
+<li><code>SetPipelineState</code></li>
+<li><code>Dispatch</code></li>
+<li>Copy UAV to Readback</li>
+</ul>
+</li>
+<li>Print
+<ul>
+<li>Wait for GPU with <code>ID3D12Fence</code></li>
+<li>Lock Readback and print its content</li>
+</ul>
+</li>
+</ul>
+<h3 id="disassembly--shader-analayzer">Disassembly &amp; Shader Analayzer</h3>
+<p>Not quite related to the hello world itself though,<br>
+it is rather useful (also fun) to see how code is generated.<br>
+To be able to throw shader file directly into analyzer,<br>
+root signature is moved from cpp into HLSL.</p>
+<p><a href="http://shader-playground.timjones.io/">Shader Playground</a> provides most functionalities,<br>
+however it does not support shader analyzers for Shader Model 6.0+ yet.</p>
+<p><a href="https://github.com/jbarczak/pyramid">Pyramid</a> is another choice.<br>
+But as RGA requires AMD card for DX12 analysis,<br>
+it turn to offline mode for Vulkan with HLSL-&gt;SPIR-V which may not reflect original code.</p>
+<h3 id="reference">Reference</h3>
+<ul>
+<li><a href="https://github.com/microsoft/DirectX-Graphics-Samples">DirectX-Graphics-Samples</a>
+<ul>
+<li>Official samples by features</li>
+<li>Abstraction and error handling make code difficult to read</li>
+</ul>
+</li>
+<li><a href="https://www.3dgep.com/learning-directx-12-1">Learning DirectX 12 – Lesson 1 – Initialize DirectX 12</a>
+<ul>
+<li>A thorough tutorial (even topics like resize, fullscreen, dpi are well covered)</li>
+<li>A bit too long for lesson 1</li>
+</ul>
+</li>
+<li><a href="https://asawicki.info/news_1719_two_shader_compilers_of_direct3d_12">Two Shader Compilers of Direct3D 12</a>
+<ul>
+<li>Usage of dxc and fxc, both online and offline</li>
+</ul>
+</li>
+</ul>
+
+            </div>
+        </article>
+
+        <hr />
+
+        <div class="post-info">
+                <p>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://silvesthu.github.io/tags/directx-12">DirectX 12</a></span><span class="tag"><a href="https://silvesthu.github.io/tags/wave-intrinsics">Wave Intrinsics</a></span><span class="tag"><a href="https://silvesthu.github.io/tags/shader-analayzer">Shader Analayzer</a></span>
+                </p>
+
+            <p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>308 Words</p>
+
+            <p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2020-05-09 00:51 &#43;0900</p>
+        </div>
+
+        
+
+        
+    </main>
+
+            </div>
+
+            
+                <footer class="footer">
+    <div class="footer__inner">
+        <div class="footer__content">
+            <span>&copy; 2020</span>
+            <span>Ken Hu</span>
+            <span> <a href="https://silvesthu.github.io/posts/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a></span>
+        </div>
+    </div>
+    <div class="footer__inner">
+        <div class="footer__content">
+            <span>Powered by <a href="http://gohugo.io">Hugo</a></span>
+            <span>Made with &#10084; by <a href="https://github.com/rhazdon">rhazdon</a></span>
+        </div>
+    </div>
+</footer>
+
+            
+        </div>
+
+        
+
+
+
+
+<script type="text/javascript" src="/bundle.min.2d5469329143160ae2456a69c3c76dc2d0a3b212b46afe291a51bd68650ed6f8697e001dab54f1c272c77ce08092a8c55e5bb4314e0ee334aab4b927ec896638.js" integrity="sha512-LVRpMpFDFgriRWppw8dtwtCjshK0av4pGlG9aGUO1vhpfgAdq1TxwnLHfOCAkqjFXlu0MU4O4zSqtLkn7IlmOA=="></script>
+
+
+
+    </body>
+</html>
