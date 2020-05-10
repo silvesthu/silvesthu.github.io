@@ -99,6 +99,10 @@ however it does not support shader analyzers for Shader Model 6.0+ yet.</p>
 <p><a href="https://github.com/jbarczak/pyramid">Pyramid</a> is another choice.<br>
 But as RGA requires AMD card for DX12 analysis,<br>
 it turn to offline mode for Vulkan with HLSL-&gt;SPIR-V which may not reflect original code.</p>
+<h3 id="work-with-profiler">Work with profiler</h3>
+<p>It's not too surprising that Nsight won't capture this console program.<br>
+So I created a branch <a href="https://github.com/silvesthu/ComputeShaderPlayground/tree/swap_chain">swap_chain</a>,<br>
+which has a dummy swap chain on console window, and a loop to presents frames.</p>
 <h3 id="reference">Reference</h3>
 <ul>
 <li><a href="https://github.com/microsoft/DirectX-Graphics-Samples">DirectX-Graphics-Samples</a>

@@ -42,7 +42,7 @@ To keep things simple, here are some decisions made in advance.
  Wave Intrinsics  DirectX 12 Shader Model 6.0&#43;  DirectXShaderCompiler (DXC)     Minimal setup  Console program  No window No swapchain No render loop   Compute Shader only No descriptor heap Minimum abstraction No error handling (except shader compilation)   Debugging  Read back output through UAV printf    Result Here is the repo ComputeShaderPlayground on Github.">
 <meta itemprop="datePublished" content="2020-05-09T00:51:14&#43;09:00" />
 <meta itemprop="dateModified" content="2020-05-09T00:51:14&#43;09:00" />
-<meta itemprop="wordCount" content="308">
+<meta itemprop="wordCount" content="343">
 <meta itemprop="image" content="https://silvesthu.github.io/"/>
 
 
@@ -209,6 +209,10 @@ however it does not support shader analyzers for Shader Model 6.0+ yet.</p>
 <p><a href="https://github.com/jbarczak/pyramid">Pyramid</a> is another choice.<br>
 But as RGA requires AMD card for DX12 analysis,<br>
 it turn to offline mode for Vulkan with HLSL-&gt;SPIR-V which may not reflect original code.</p>
+<h3 id="work-with-profiler">Work with profiler</h3>
+<p>It's not too surprising that Nsight won't capture this console program.<br>
+So I created a branch <a href="https://github.com/silvesthu/ComputeShaderPlayground/tree/swap_chain">swap_chain</a>,<br>
+which has a dummy swap chain on console window, and a loop to presents frames.</p>
 <h3 id="reference">Reference</h3>
 <ul>
 <li><a href="https://github.com/microsoft/DirectX-Graphics-Samples">DirectX-Graphics-Samples</a>
@@ -240,7 +244,7 @@ it turn to offline mode for Vulkan with HLSL-&gt;SPIR-V which may not reflect or
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://silvesthu.github.io/tags/directx-12">DirectX 12</a></span><span class="tag"><a href="https://silvesthu.github.io/tags/wave-intrinsics">Wave Intrinsics</a></span><span class="tag"><a href="https://silvesthu.github.io/tags/shader-analayzer">Shader Analayzer</a></span>
                 </p>
 
-            <p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>308 Words</p>
+            <p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>343 Words</p>
 
             <p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2020-05-09 00:51 &#43;0900</p>
         </div>
