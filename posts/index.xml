@@ -5,8 +5,97 @@
         <description>Recent content in Posts on Indefinite Seven</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>en-us</language>
-        <lastBuildDate>Sat, 09 May 2020 00:51:14 +0900</lastBuildDate>
+        <lastBuildDate>Sun, 24 May 2020 07:45:52 +0900</lastBuildDate>
         <atom:link href="https://silvesthu.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+        
+        <item>
+            <title>HLSL pitfalls</title>
+            <link>https://silvesthu.github.io/posts/2020/05/hlsl-pitfalls/</link>
+            <pubDate>Sun, 24 May 2020 07:45:52 +0900</pubDate>
+            
+            <guid>https://silvesthu.github.io/posts/2020/05/hlsl-pitfalls/</guid>
+            <description>Have encountered several issues of HLSL.
+Found most workaround/solution on internet.
+I&#39;m afraid the list is still growing as I know more,
+put them in one place could be helpful.
+Denormalized float, small float/large uint This is a FXC only issue.
+First, there is asfloat(0x7FFFFF) =&amp;gt; 0 from
+https://www.slideshare.net/DevCentralAMD/lowlevel-shader-optimization-for-nextgen-and-dx11-by-emil-persson
+asfloat always gives 0 if you feed bits fit denormalized pattern.
+asuint(asfloat(0x7FFFFF)) =&amp;gt; 0
+Then, floats smaller than 1e-6 won&#39;t make their way into output.</description>
+            <content type="html"><![CDATA[<p>Have encountered several issues of HLSL.<br>
+Found most workaround/solution on internet.<br>
+I'm afraid the list is still growing as I know more,<br>
+put them in one place could be helpful.</p>
+<h2 id="denormalized-float-small-floatlarge-uint">Denormalized float, small float/large uint</h2>
+<p><strong>This is a FXC only issue.</strong></p>
+<p>First, there is <code>asfloat(0x7FFFFF) =&gt; 0</code> from<br>
+<a href="https://www.slideshare.net/DevCentralAMD/lowlevel-shader-optimization-for-nextgen-and-dx11-by-emil-persson">https://www.slideshare.net/DevCentralAMD/lowlevel-shader-optimization-for-nextgen-and-dx11-by-emil-persson</a></p>
+<p><code>asfloat</code> always gives 0 if you feed bits fit denormalized pattern.<br>
+<code>asuint(asfloat(0x7FFFFF)) =&gt; 0</code></p>
+<p>Then, floats smaller than 1e-6 won't make their way into output.<br>
+<code>return 1e-7; =&gt; return 0;</code><br>
+I wonder how one can write to a R32_FLOAT correctly.<br>
+Similarly, uint equal or larger than 0x00800000 (24 bit),<br>
+<code>return 0x00800000; =&gt; return 0;</code><br>
+Unlike the denormalized case,<br>
+small float/large uint stay alive during calculation.<br>
+It only becomes problem when exporting them, to render target or UAV.</p>
+<hr>
+<h2 id="nonuniformresourceindex">NonUniformResourceIndex</h2>
+<p>This is rather simple.<br>
+<a href="https://docs.microsoft.com/en-us/windows/win32/direct3d12/resource-binding-in-hlsl#resource-types-and-arrays">https://docs.microsoft.com/en-us/windows/win32/direct3d12/resource-binding-in-hlsl#resource-types-and-arrays</a><br>
+One need to add the <code>NonUniformResourceIndex</code> when accessing array with non-uniform index.<br>
+<code>tex1[NonUniformResourceIndex(myMaterialID)].Sample(samp[NonUniformResourceIndex(samplerID)], texCoords);</code></p>
+<p>The evil part is, even if you don't follow compiler won't complain about it.<br>
+Then you'll find it breaks on some GPUs.<br>
+Further detail can be found here.<br>
+<a href="https://www.asawicki.info/news_1608_direct3d_12_-_watch_out_for_non-uniform_resource_index">https://www.asawicki.info/news_1608_direct3d_12_-_watch_out_for_non-uniform_resource_index</a></p>
+<hr>
+<h2 id="wavereadlaneat">WaveReadLaneAt</h2>
+<p><a href="https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/wavereadlaneat">https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/wavereadlaneat</a></p>
+<blockquote>
+<p>The input lane index must be uniform across the wave.<br>
+This function is effectively a broadcast of the value in the laneIndex’th lane.</p>
+</blockquote>
+<p>But what happens if we pass non-uniform index to it? It works!<br>
+Now That's confusing.<br>
+Here's a sample.<br>
+<a href="http://shader-playground.timjones.io/60ec03f77dfcbfa9f1951327cf80cede">http://shader-playground.timjones.io/60ec03f77dfcbfa9f1951327cf80cede</a></p>
+<p>DXC gives<br>
+<code>%6 = call i32 @dx.op.waveReadLaneAt.i32(i32 117, i32 %2, i32 %5)</code><br>
+So my guess is DXC doesn't actually check whether a variable is uniform or not,<br>
+thus no error reported.</p>
+<p>So why the restriction in the first place?</p>
+<p><a href="https://twitter.com/SebAaltonen/status/1095183824290484226">https://twitter.com/SebAaltonen/status/1095183824290484226</a></p>
+<blockquote>
+<p>WaveReadLaneAt must have wave uniform index. Docs say so. SM 6.0 wave intrinsics were modeled after GCN2 hardware (original Xbox One). GCN3 additions (DS_PERMUTE) and Nvidia/Intel equivalents are not exposed. GCN3+ and all Nvidia/Intel DX12 HW support full per lane stuffle.</p>
+</blockquote>
+<p>Turn out it need a specific instruction to perform on non-uniform index.<br>
+And it becomes a shuffle rather than a broadcast.<br>
+In GLSL/Vulkan, <code>subgroupBroadcast</code> and <code>subgroupShuffle</code> are well defined.<br>
+<a href="https://www.khronos.org/assets/uploads/developers/library/2018-vulkan-devday/06-subgroups.pdf">HLSL/GLSL/SPRI-V mapping</a></p>
+<p>On my Intel/Nvidia card, it behaves like a shuffle and results seem alright.<br>
+I'm curious what will driver do if hardware just don't support shuffle.<br>
+Luckily for AMD we have the <a href="https://github.com/GPUOpen-Tools/radeon_gpu_analyzer">Radeon GPU Analyzer</a>.<br>
+For gfx1010, it generate <code>ds_bpermute_b32</code>, which is a shuffle as in the twitter thread.<br>
+For gfx702, GCN2, the generated code is much longer. <a href="https://pastebin.com/gr0ivzg3">pastebin</a>.</p>
+<pre><code>// In HLSL it might look like this
+// Every lane keeps checking till itself becomes the first lane, then do the actual work. Nice trick
+while (true)
+{
+	if (WaveReadLaneFirst(SV_GroupThreadID) == SV_GroupThreadID)
+	{
+		uint uniform_index = WaveReadLaneFirst(index);
+		output = WaveReadLaneAt(intput, uniform_index);
+		break;
+	}
+}
+</code></pre><hr>
+<p>Hope this list won't grow too much in the future.</p>
+]]></content>
+        </item>
         
         <item>
             <title>Wave Intrinsics Hello World</title>

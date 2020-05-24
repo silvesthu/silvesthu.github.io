@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Indefinite Seven</title>
-    <link>https://silvesthu.github.io/</link>
-    <description>Recent content on Indefinite Seven</description>
+    <title>HLSL on Indefinite Seven</title>
+    <link>https://silvesthu.github.io/tags/hlsl/</link>
+    <description>Recent content in HLSL on Indefinite Seven</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Sun, 24 May 2020 07:45:52 +0900</lastBuildDate>
     
-	<atom:link href="https://silvesthu.github.io/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://silvesthu.github.io/tags/hlsl/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
@@ -27,19 +27,6 @@ https://www.slideshare.net/DevCentralAMD/lowlevel-shader-optimization-for-nextge
 asfloat always gives 0 if you feed bits fit denormalized pattern.
 asuint(asfloat(0x7FFFFF)) =&amp;gt; 0
 Then, floats smaller than 1e-6 won&#39;t make their way into output.</description>
-    </item>
-    
-    <item>
-      <title>Wave Intrinsics Hello World</title>
-      <link>https://silvesthu.github.io/posts/2020/05/wave-intrinsics-hello-world/</link>
-      <pubDate>Sat, 09 May 2020 00:51:14 +0900</pubDate>
-      
-      <guid>https://silvesthu.github.io/posts/2020/05/wave-intrinsics-hello-world/</guid>
-      <description>After work with DirectX 12 for a while,
-with some need to validate shader using Wave Intrinsics,
-I wrote a hello world as a playground.
-To keep things simple, here are some decisions made in advance.
- Wave Intrinsics  DirectX 12 Shader Model 6.0+  DirectXShaderCompiler (DXC)     Minimal setup  Console program  No window No swapchain No render loop   Compute Shader only No descriptor heap Minimum abstraction No error handling (except shader compilation)   Debugging  Read back output through UAV printf    Result Here is the repo ComputeShaderPlayground on Github.</description>
     </item>
     
   </channel>
