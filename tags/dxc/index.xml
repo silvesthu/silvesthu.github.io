@@ -23,10 +23,8 @@ I&#39;m afraid the list is still growing as I know more,
 put them in one place could be helpful.
 Denormalized float, small float/large uint This is a FXC only issue.
 First, there is asfloat(0x7FFFFF) =&amp;gt; 0 from
-https://www.slideshare.net/DevCentralAMD/lowlevel-shader-optimization-for-nextgen-and-dx11-by-emil-persson
-asfloat always gives 0 if you feed bits fit denormalized pattern.
-asuint(asfloat(0x7FFFFF)) =&amp;gt; 0
-Then, floats smaller than 1e-6 won&#39;t make their way into output.</description>
+Low-level Shader Optimization for Next-Gen and DX11 by Emil Persson.
+That is, asfloat always gives 0 if you feed bits fit denormalized pattern.</description>
     </item>
     
   </channel>

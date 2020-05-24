@@ -20,10 +20,8 @@ I&#39;m afraid the list is still growing as I know more,
 put them in one place could be helpful.
 Denormalized float, small float/large uint This is a FXC only issue.
 First, there is asfloat(0x7FFFFF) =&amp;gt; 0 from
-https://www.slideshare.net/DevCentralAMD/lowlevel-shader-optimization-for-nextgen-and-dx11-by-emil-persson
-asfloat always gives 0 if you feed bits fit denormalized pattern.
-asuint(asfloat(0x7FFFFF)) =&amp;gt; 0
-Then, floats smaller than 1e-6 won&#39;t make their way into output.</description>
+Low-level Shader Optimization for Next-Gen and DX11 by Emil Persson.
+That is, asfloat always gives 0 if you feed bits fit denormalized pattern.</description>
             <content type="html"><![CDATA[<p>Have encountered several issues of HLSL.<br>
 Found most workaround/solution on internet.<br>
 I'm afraid the list is still growing as I know more,<br>
@@ -31,15 +29,14 @@ put them in one place could be helpful.</p>
 <h2 id="denormalized-float-small-floatlarge-uint">Denormalized float, small float/large uint</h2>
 <p><strong>This is a FXC only issue.</strong></p>
 <p>First, there is <code>asfloat(0x7FFFFF) =&gt; 0</code> from<br>
-<a href="https://www.slideshare.net/DevCentralAMD/lowlevel-shader-optimization-for-nextgen-and-dx11-by-emil-persson">https://www.slideshare.net/DevCentralAMD/lowlevel-shader-optimization-for-nextgen-and-dx11-by-emil-persson</a></p>
-<p><code>asfloat</code> always gives 0 if you feed bits fit denormalized pattern.<br>
-<code>asuint(asfloat(0x7FFFFF)) =&gt; 0</code></p>
+<a href="https://www.slideshare.net/DevCentralAMD/lowlevel-shader-optimization-for-nextgen-and-dx11-by-emil-persson">Low-level Shader Optimization for Next-Gen and DX11 by Emil Persson</a>.<br>
+That is, <code>asfloat</code> always gives 0 if you feed bits fit denormalized pattern.</p>
 <p>Then, floats smaller than 1e-6 won't make their way into output.<br>
 <code>return 1e-7; =&gt; return 0;</code><br>
-I wonder how one can write to a R32_FLOAT correctly.<br>
-Similarly, uint equal or larger than 0x00800000 (24 bit),<br>
-<code>return 0x00800000; =&gt; return 0;</code><br>
-Unlike the denormalized case,<br>
+I wonder how one can write to a R32_FLOAT correctly.</p>
+<p>Similarly, uint equal or larger than 0x00800000 (24 bit),<br>
+<code>return 0x00800000; =&gt; return 0;</code></p>
+<p>Unlike the denormalized case,<br>
 small float/large uint stay alive during calculation.<br>
 It only becomes problem when exporting them, to render target or UAV.</p>
 <hr>
@@ -61,8 +58,7 @@ This function is effectively a broadcast of the value in the laneIndex’th lane
 </blockquote>
 <p>But what happens if we pass non-uniform index to it? It works!<br>
 Now That's confusing.<br>
-Here's a sample.<br>
-<a href="http://shader-playground.timjones.io/60ec03f77dfcbfa9f1951327cf80cede">http://shader-playground.timjones.io/60ec03f77dfcbfa9f1951327cf80cede</a></p>
+Here's a sample on <a href="http://shader-playground.timjones.io/60ec03f77dfcbfa9f1951327cf80cede">Shader Playground</a>.</p>
 <p>DXC gives<br>
 <code>%6 = call i32 @dx.op.waveReadLaneAt.i32(i32 117, i32 %2, i32 %5)</code><br>
 So my guess is DXC doesn't actually check whether a variable is uniform or not,<br>
@@ -80,19 +76,21 @@ In GLSL/Vulkan, <code>subgroupBroadcast</code> and <code>subgroupShuffle</code> 
 I'm curious what will driver do if hardware just don't support shuffle.<br>
 Luckily for AMD we have the <a href="https://github.com/GPUOpen-Tools/radeon_gpu_analyzer">Radeon GPU Analyzer</a>.<br>
 For gfx1010, it generate <code>ds_bpermute_b32</code>, which is a shuffle as in the twitter thread.<br>
-For gfx702, GCN2, the generated code is much longer. <a href="https://pastebin.com/gr0ivzg3">pastebin</a>.</p>
+For gfx702, GCN2, the generated code is much longer. <a href="https://pastebin.com/gr0ivzg3">Pastebin</a>.</p>
 <pre><code>// In HLSL it might look like this
 // Every lane keeps checking till itself becomes the first lane, then do the actual work. Nice trick
 while (true)
 {
 	if (WaveReadLaneFirst(SV_GroupThreadID) == SV_GroupThreadID)
 	{
-		uint uniform_index = WaveReadLaneFirst(index);
-		output = WaveReadLaneAt(intput, uniform_index);
+		uint uniform_index = WaveReadLaneFirst(divergent_index);
+		output = WaveReadLaneAt(input, uniform_index);
 		break;
 	}
 }
-</code></pre><hr>
+</code></pre><p>See full sample in <a href="http://shader-playground.timjones.io/2fc43f77f626c4883e1b1ed23fd8b2e1">Shader Playground</a><br>
+Somehow an extra if is needed for DXC to generate a loop correctly&hellip;</p>
+<hr>
 <p>Hope this list won't grow too much in the future.</p>
 ]]></content>
         </item>
