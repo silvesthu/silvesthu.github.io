@@ -415,3 +415,8 @@ footer{
     }
 
 }
+
+body .gist .gist-data {
+    background-color: #181A1B;
+    color : #D8D6D0;
+}
