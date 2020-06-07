@@ -13,26 +13,25 @@
     
     <item>
       <title>HLSL pitfalls</title>
-      <link>https://silvesthu.github.io/posts/2020/05/hlsl-pitfalls/</link>
+      <link>https://silvesthu.github.io/posts/hlsl-pitfalls/</link>
       <pubDate>Sun, 24 May 2020 07:45:52 +0900</pubDate>
       
-      <guid>https://silvesthu.github.io/posts/2020/05/hlsl-pitfalls/</guid>
-      <description>Have encountered several issues of HLSL.
-Found most workaround/solution on internet.
-I&#39;m afraid the list is still growing as I know more,
-put them in one place could be helpful.
+      <guid>https://silvesthu.github.io/posts/hlsl-pitfalls/</guid>
+      <description>I&#39;ve encountered several issues of HLSL, and lucky enough found most workaround/solution on internet.
+It doesn&#39;t feel right for anyone to remember all these.
 Denormalized float, small float/large uint This is a FXC only issue.
 First, there is asfloat(0x7FFFFF) =&amp;gt; 0 from
 Low-level Shader Optimization for Next-Gen and DX11 by Emil Persson.
-That is, asfloat always gives 0 if you feed bits fit denormalized pattern.</description>
+That is, asfloat always gives 0 if you feed bits fit denormalized pattern.
+Then, floats smaller than 1e-6 won&#39;t make their way into output.</description>
     </item>
     
     <item>
       <title>Wave Intrinsics Hello World</title>
-      <link>https://silvesthu.github.io/posts/2020/05/wave-intrinsics-hello-world/</link>
+      <link>https://silvesthu.github.io/posts/wave-intrinsics-hello-world/</link>
       <pubDate>Sat, 09 May 2020 00:51:14 +0900</pubDate>
       
-      <guid>https://silvesthu.github.io/posts/2020/05/wave-intrinsics-hello-world/</guid>
+      <guid>https://silvesthu.github.io/posts/wave-intrinsics-hello-world/</guid>
       <description>After work with DirectX 12 for a while,
 with some need to validate shader using Wave Intrinsics,
 I wrote a hello world as a playground.

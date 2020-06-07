@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="blog, game, graphics, programming">
+    <meta name="Author" content="Ken Hu">
+    <meta name="keywords" content="blog, game, graphics, programming">
+    <link rel="stylesheet" href=https://silvesthu.github.io/css/syntax.css>
+    <link rel="stylesheet" href=https://silvesthu.github.io/css/style.css>
+    <script src="https://kit.fontawesome.com/1b7478c139.js" crossorigin="anonymous"></script>
+    <title>Indefinite Seven</title>
+  </head><body><aside id="sidenav">
+    <header>
+    
+
+    <a id="branding" href=https://silvesthu.github.io/>
+        
+            Indefinite Seven
+        
+    </a>
+    </header>
+
+    <nav>
+        
+            		
+            <a href="/posts/"
+                
+            >
+                <i class="fas fa-keyboard fa-ms"></i>
+                <span>Posts</span>
+            </a>
+        
+            		
+            <a href="/tags"
+                
+            >
+                <i class="fas fa-tags fa-ms"></i>
+                <span>Tags</span>
+            </a>
+        
+            		
+            <a href="/index.xml"
+                
+            >
+                <i class="fas fa-rss fa-ms"></i>
+                <span>RSS</span>
+            </a>
+        
+            		
+            <a href="https://github.com/silvesthu"
+                
+                    target="_blank"
+                
+            >
+                <i class="fab fa-github fa-ms"></i>
+                <span>Github</span>
+            </a>
+        
+            		
+            <a href="https://twitter.com/kenhu07"
+                
+                    target="_blank"
+                
+            >
+                <i class="fab fa-twitter fa-ms"></i>
+                <span>Twitter</span>
+            </a>
+        
+    </nav>
+</aside>
+<main id="main">
+            <a href="javascript:void(0)" id="closebtn" onclick="navToggle()"><i class="fas fa-bars fa-lg"></i></a>
+            <div class="content">
+    
+    <h1 id="title">HLSL pitfalls</h1>
+    
+    
+       <i class="far fa-calendar-alt"></i> May 24 2020
+    
+    
+    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#denormalized-float-small-floatlarge-uint">Denormalized float, small float/large uint</a></li>
+    <li><a href="#nonuniformresourceindex">NonUniformResourceIndex</a></li>
+    <li><a href="#wavereadlaneat">WaveReadLaneAt</a></li>
+  </ul>
+</nav>
+    <hr />
+    <p>I've encountered several issues of HLSL, and lucky enough found most workaround/solution on internet.<br>
+It doesn't feel right for anyone to remember all these.</p>
+<h2 id="denormalized-float-small-floatlarge-uint">Denormalized float, small float/large uint</h2>
+<p><strong>This is a FXC only issue.</strong></p>
+<p>First, there is <code>asfloat(0x7FFFFF) =&gt; 0</code> from<br>
+<a href="https://www.slideshare.net/DevCentralAMD/lowlevel-shader-optimization-for-nextgen-and-dx11-by-emil-persson">Low-level Shader Optimization for Next-Gen and DX11 by Emil Persson</a>.<br>
+That is, <code>asfloat</code> always gives 0 if you feed bits fit denormalized pattern.</p>
+<p>Then, floats smaller than 1e-6 won't make their way into output.<br>
+<code>return 1e-7; =&gt; return 0;</code><br>
+I wonder how one can write to a R32_FLOAT correctly.</p>
+<p>Similarly, uint equal or larger than 0x00800000 (24 bit),<br>
+<code>return 0x00800000; =&gt; return 0;</code></p>
+<p>Unlike the denormalized case,<br>
+small float/large uint stay alive during calculation.<br>
+It only becomes problem when exporting them, to render target or UAV.</p>
+<hr>
+<h2 id="nonuniformresourceindex">NonUniformResourceIndex</h2>
+<p>This is rather simple.<br>
+<a href="https://docs.microsoft.com/en-us/windows/win32/direct3d12/resource-binding-in-hlsl#resource-types-and-arrays">https://docs.microsoft.com/en-us/windows/win32/direct3d12/resource-binding-in-hlsl#resource-types-and-arrays</a><br>
+One need to add the <code>NonUniformResourceIndex</code> when accessing array with non-uniform index.<br>
+<code>tex1[NonUniformResourceIndex(myMaterialID)].Sample(samp[NonUniformResourceIndex(samplerID)], texCoords);</code></p>
+<p>The evil part is, even if you don't follow compiler won't complain about it.<br>
+Then you'll find it breaks on some GPUs.<br>
+Further detail can be found here.<br>
+<a href="https://www.asawicki.info/news_1608_direct3d_12_-_watch_out_for_non-uniform_resource_index">https://www.asawicki.info/news_1608_direct3d_12_-_watch_out_for_non-uniform_resource_index</a></p>
+<hr>
+<h2 id="wavereadlaneat">WaveReadLaneAt</h2>
+<p><a href="https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/wavereadlaneat">https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/wavereadlaneat</a></p>
+<blockquote>
+<p>The input lane index must be uniform across the wave.<br>
+This function is effectively a broadcast of the value in the laneIndex’th lane.</p>
+</blockquote>
+<p>But what happens if we pass non-uniform index to it? It works!<br>
+Now That's confusing.<br>
+Here's a sample on <a href="http://shader-playground.timjones.io/60ec03f77dfcbfa9f1951327cf80cede">Shader Playground</a>.</p>
+<p>DXC gives<br>
+<code>%6 = call i32 @dx.op.waveReadLaneAt.i32(i32 117, i32 %2, i32 %5)</code><br>
+So my guess is DXC doesn't actually check whether a variable is uniform or not,<br>
+thus no error reported.</p>
+<p>So why the restriction in the first place?</p>
+<p><a href="https://twitter.com/SebAaltonen/status/1095183824290484226">https://twitter.com/SebAaltonen/status/1095183824290484226</a></p>
+<blockquote>
+<p>WaveReadLaneAt must have wave uniform index. Docs say so. SM 6.0 wave intrinsics were modeled after GCN2 hardware (original Xbox One). GCN3 additions (DS_PERMUTE) and Nvidia/Intel equivalents are not exposed. GCN3+ and all Nvidia/Intel DX12 HW support full per lane stuffle.</p>
+</blockquote>
+<p>Turn out it need a specific instruction to perform on non-uniform index.<br>
+And it becomes a shuffle rather than a broadcast.<br>
+In GLSL/Vulkan, <code>subgroupBroadcast</code> and <code>subgroupShuffle</code> are well defined.<br>
+<a href="https://www.khronos.org/assets/uploads/developers/library/2018-vulkan-devday/06-subgroups.pdf">HLSL/GLSL/SPRI-V mapping</a></p>
+<p>On my Intel/Nvidia card, it behaves like a shuffle and results seem alright.<br>
+I'm curious what will driver do if hardware just don't support shuffle.<br>
+Luckily for AMD we have the <a href="https://github.com/GPUOpen-Tools/radeon_gpu_analyzer">Radeon GPU Analyzer</a>.<br>
+For gfx1010, it generate <code>ds_bpermute_b32</code>, which is a shuffle as in the twitter thread.<br>
+For gfx702, GCN2, the generated code is much longer. <a href="https://pastebin.com/gr0ivzg3">Pastebin</a>.</p>
+<pre><code>// In HLSL it might look like this
+// Every lane keeps checking till itself becomes the first lane, then do the actual work. Nice trick
+while (true)
+{
+	if (WaveReadLaneFirst(SV_GroupThreadID) == SV_GroupThreadID)
+	{
+		uint uniform_index = WaveReadLaneFirst(divergent_index);
+		output = WaveReadLaneAt(input, uniform_index);
+		break;
+	}
+}
+</code></pre><p>See full sample in <a href="http://shader-playground.timjones.io/2fc43f77f626c4883e1b1ed23fd8b2e1">Shader Playground</a><br>
+Somehow an extra if is needed for DXC to generate a loop correctly&hellip;</p>
+<hr>
+<p>Hope this list won't grow too much in the future.</p>
+
+    
+    <div class="nav-next-prev">
+        <div class="nav-prev">
+            
+                <a href="https://silvesthu.github.io/posts/wave-intrinsics-hello-world/"><i class="fas fa-chevron-left"></i></a>
+            
+        </div>
+        <a class="nav-top" href="#">top</i></a>
+        <div class="nav-next">
+            
+                <a class="grayed-out" href="javascript:void()"><i class="fas fa-chevron-right"></i></a>
+            
+        </div>
+    </div>
+    
+
+            </div><footer>
+  <script src="https://utteranc.es/client.js"
+      repo="silvesthu/silvesthu.github.io"
+      issue-term="pathname"
+      theme="photon-dark"
+      crossorigin="anonymous"
+      async>
+  </script>
+<div class="footer-content">
+
+  <div class="contact-info">
+      
+      
+  </div>
+
+
+</div>
+</footer></main>
+    </body>
+    <script src=https://silvesthu.github.io/js/navbutton.js></script>
+</html>
