@@ -13,10 +13,10 @@
     
     <item>
       <title>HLSL pitfalls</title>
-      <link>https://silvesthu.github.io/posts/hlsl-pitfalls/</link>
+      <link>https://silvesthu.github.io/posts/2020/05/hlsl-pitfalls/</link>
       <pubDate>Sun, 24 May 2020 07:45:52 +0900</pubDate>
       
-      <guid>https://silvesthu.github.io/posts/hlsl-pitfalls/</guid>
+      <guid>https://silvesthu.github.io/posts/2020/05/hlsl-pitfalls/</guid>
       <description>I&#39;ve encountered several issues of HLSL, and lucky enough found most workaround/solution on internet.
 It doesn&#39;t feel right for anyone to remember all these.
 Denormalized float, small float/large uint This is a FXC only issue.

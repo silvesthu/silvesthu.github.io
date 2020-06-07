@@ -13,10 +13,10 @@
     
     <item>
       <title>Wave Intrinsics Hello World</title>
-      <link>https://silvesthu.github.io/posts/wave-intrinsics-hello-world/</link>
+      <link>https://silvesthu.github.io/posts/2020/05/wave-intrinsics-hello-world/</link>
       <pubDate>Sat, 09 May 2020 00:51:14 +0900</pubDate>
       
-      <guid>https://silvesthu.github.io/posts/wave-intrinsics-hello-world/</guid>
+      <guid>https://silvesthu.github.io/posts/2020/05/wave-intrinsics-hello-world/</guid>
       <description>After work with DirectX 12 for a while,
 with some need to validate shader using Wave Intrinsics,
 I wrote a hello world as a playground.
