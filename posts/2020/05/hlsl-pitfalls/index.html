@@ -178,7 +178,8 @@ Test results on my RTX 2070 even suggested that,<br>
 globallycoherent is likely to make UAV access bypass L1, even if barrier is absent. <br>
 Strictly speaking, L1 is per SM on RTX and is not directly mapped to shader group either,<br>
 but it is still more intuitive to understand globallycoherent from cache hierarchy.</p>
-<p>Practically, globallycoherent might not be necessary in most cases.<br>
+<p>Practically, globallycoherent might not be necessary in most cases,<br>
+e.g. Atomic operations ensure global coherence by themselves.<br>
 But multi-phase processing, like mip pyramid generation in reference,<br>
 is where globallycoherent should be taken into consideration.</p>
 <ul>
