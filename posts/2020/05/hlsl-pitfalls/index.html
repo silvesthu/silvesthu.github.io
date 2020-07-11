@@ -85,6 +85,7 @@
     <li><a href="#denormalized-float-small-floatlarge-uint">Denormalized float, small float/large uint</a></li>
     <li><a href="#nonuniformresourceindex">NonUniformResourceIndex</a></li>
     <li><a href="#wavereadlaneat">WaveReadLaneAt</a></li>
+    <li><a href="#globallycoherent">globallycoherent</a></li>
   </ul>
 </nav>
     <hr />
@@ -155,7 +156,39 @@ while (true)
 </code></pre><p>See full sample in <a href="http://shader-playground.timjones.io/2fc43f77f626c4883e1b1ed23fd8b2e1">Shader Playground</a><br>
 Somehow an extra if is needed for DXC to generate a loop correctly&hellip;</p>
 <hr>
-<p>Hope this list won't grow too much in the future.</p>
+<h2 id="globallycoherent">globallycoherent</h2>
+<p>The <a href="https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/sm5-object-rwstructuredbuffer">document</a> describes this this keyword as</p>
+<blockquote>
+<p>RWStructuredBuffer objects can be prefixed with the storage class globallycoherent. This storage class causes memory barriers and syncs to flush data across the entire GPU such that other groups can see writes. Without this specifier, a memory barrier or sync will only flush a UAV within the current group.</p>
+</blockquote>
+<p>More detail can be found in <a href="https://microsoft.github.io/DirectX-Specs/d3d/archive/D3D11_3_FunctionalSpec.htm#7.14.4%20Global%20vs%20Group/Local%20Coherency%20on%20Non-Atomic%20UAV%20Reads">(DirectX-Specs) Global vs Group/Local Coherency on Non-Atomic UAV Reads</a></p>
+<p>As it is not so intuitive on when the prefix should be used,<br>
+I made <a href="https://github.com/silvesthu/ComputeShaderPlayground/blob/globallycoherent/Shader.hlsl">a sample</a> to check when it must be used to ensure correctness.</p>
+<p>The sample works as,</p>
+<ul>
+<li>Group 0 write uav</li>
+<li>Group 1 do some heavy lifting</li>
+<li>Group 1 write uav <strong>(this write will be ignored by later read if globallycoherent is not used)</strong></li>
+<li>Group 0 wait on Group 1 with a flag/counter</li>
+<li>Group 0 read uav (also write again as output)</li>
+</ul>
+<p>I assume the underlying issue is, UAV access is L1 coherent by default,<br>
+and during shader execution, there is no other way to flush L1, bypass is a reasonable choice.<br>
+Test results on my RTX 2070 even suggested that,<br>
+globallycoherent is likely to make UAV access bypass L1, even if barrier is absent. <br>
+Strictly speaking, L1 is per SM on RTX and is not directly mapped to shader group either,<br>
+but it is still more intuitive to understand globallycoherent from cache hierarchy.</p>
+<p>Practically, globallycoherent might not be necessary in most cases.<br>
+But multi-phase processing, like mip pyramid generation in reference,<br>
+is where globallycoherent should be taken into consideration.</p>
+<ul>
+<li>Reference
+<ul>
+<li><a href="https://twitter.com/sebaaltonen/status/1115717152244420608">Related discussion on twitter</a></li>
+<li><a href="https://gist.github.com/sebbbi/6cfbec7ab343924dad9b7ee48ef3ba6c">Single pass globallycoherent mip pyramid generation by @SebAaltonen</a></li>
+</ul>
+</li>
+</ul>
 
     
     <div class="nav-next-prev">
