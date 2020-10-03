@@ -98,22 +98,28 @@ It doesn't feel right for anyone to remember all these.</p>
 That is, <code>asfloat</code> always gives 0 if you feed bits fit denormalized pattern.</p>
 <p>Then, floats smaller than 1e-6 won't make their way into output.<br>
 <code>return 1e-7; =&gt; return 0;</code><br>
-I wonder how one can write to a R32_FLOAT correctly.</p>
+I wonder how one can write to a R32_FLOAT correctly.<br>
+<a href="http://shader-playground.timjones.io/a0d2300aa58d50ccf28afdd8b66edf7a">ShaderPlayground</a></p>
 <p>Similarly, uint equal or larger than 0x00800000 (24 bit),<br>
-<code>return 0x00800000; =&gt; return 0;</code></p>
+<code>return 0x00800000; =&gt; return 0;</code><br>
+<a href="http://shader-playground.timjones.io/195e9f0e3b92cd603fd4a604fdebe72f">ShaderPlayground</a></p>
 <p>Unlike the denormalized case,<br>
 small float/large uint stay alive during calculation.<br>
 It only becomes problem when exporting them, to render target or UAV.</p>
+<p>Thank god at least compile-time constants acts in the same way.</p>
 <hr>
 <h2 id="nonuniformresourceindex">NonUniformResourceIndex</h2>
 <p>This is rather simple.<br>
 <a href="https://docs.microsoft.com/en-us/windows/win32/direct3d12/resource-binding-in-hlsl#resource-types-and-arrays">https://docs.microsoft.com/en-us/windows/win32/direct3d12/resource-binding-in-hlsl#resource-types-and-arrays</a><br>
-One need to add the <code>NonUniformResourceIndex</code> when accessing array with non-uniform index.<br>
-<code>tex1[NonUniformResourceIndex(myMaterialID)].Sample(samp[NonUniformResourceIndex(samplerID)], texCoords);</code></p>
-<p>The evil part is, even if you don't follow compiler won't complain about it.<br>
+One need to add the <code>NonUniformResourceIndex</code> when accessing array with non-uniform index.</p>
+<pre><code>tex1[NonUniformResourceIndex(myMaterialID)].Sample(samp[NonUniformResourceIndex(samplerID)], texCoords);
+</code></pre><p>The evil part is, even if you don't follow compiler won't complain about it.<br>
 Then you'll find it breaks on some GPUs.<br>
 Further detail can be found here.<br>
-<a href="https://www.asawicki.info/news_1608_direct3d_12_-_watch_out_for_non-uniform_resource_index">https://www.asawicki.info/news_1608_direct3d_12_-_watch_out_for_non-uniform_resource_index</a></p>
+<a href="https://www.asawicki.info/news_1608_direct3d_12_-_watch_out_for_non-uniform_resource_index">Direct3D 12 - Watch out for non-uniform resource index! by Adam Sawicki</a></p>
+<p><strong>Update:</strong><br>
+<a href="https://gpuopen.com/learn/porting-detroit-2/">PORTING DETROIT: BECOME HUMAN FROM PLAYSTATION® 4 TO PC – PART 2</a><br>
+also mentioned this keyword (with annotated ISA!).</p>
 <hr>
 <h2 id="wavereadlaneat">WaveReadLaneAt</h2>
 <p><a href="https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/wavereadlaneat">https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/wavereadlaneat</a></p>
@@ -124,11 +130,10 @@ This function is effectively a broadcast of the value in the laneIndex’th lane
 <p>But what happens if we pass non-uniform index to it? It works!<br>
 Now That's confusing.<br>
 Here's a sample on <a href="http://shader-playground.timjones.io/60ec03f77dfcbfa9f1951327cf80cede">Shader Playground</a>.</p>
-<p>DXC gives<br>
-<code>%6 = call i32 @dx.op.waveReadLaneAt.i32(i32 117, i32 %2, i32 %5)</code><br>
-So my guess is DXC doesn't actually check whether a variable is uniform or not,<br>
-thus no error reported.</p>
-<p>So why the restriction in the first place?</p>
+<p>As DXC just gives</p>
+<pre><code>%6 = call i32 @dx.op.waveReadLaneAt.i32(i32 117, i32 %2, i32 %5)
+</code></pre><p>My guess is it doesn't actually check whether a variable is uniform or not, thus no error reported.<br>
+So why the restriction in the first place?</p>
 <p><a href="https://twitter.com/SebAaltonen/status/1095183824290484226">https://twitter.com/SebAaltonen/status/1095183824290484226</a></p>
 <blockquote>
 <p>WaveReadLaneAt must have wave uniform index. Docs say so. SM 6.0 wave intrinsics were modeled after GCN2 hardware (original Xbox One). GCN3 additions (DS_PERMUTE) and Nvidia/Intel equivalents are not exposed. GCN3+ and all Nvidia/Intel DX12 HW support full per lane stuffle.</p>
@@ -136,13 +141,15 @@ thus no error reported.</p>
 <p>Turn out it need a specific instruction to perform on non-uniform index.<br>
 And it becomes a shuffle rather than a broadcast.<br>
 In GLSL/Vulkan, <code>subgroupBroadcast</code> and <code>subgroupShuffle</code> are well defined.<br>
-<a href="https://www.khronos.org/assets/uploads/developers/library/2018-vulkan-devday/06-subgroups.pdf">HLSL/GLSL/SPRI-V mapping</a></p>
-<p>On my Intel/Nvidia card, it behaves like a shuffle and results seem alright.<br>
+As described in <a href="https://www.khronos.org/assets/uploads/developers/library/2018-vulkan-devday/06-subgroups.pdf">HLSL/GLSL/SPRI-V mapping</a></p>
+<p>I checked on my Intel HD Graphics 620 (26.20.100.7639) and NVIDIA GeForce RTX 2070 (27.21.14.5638).<br>
+They behaves like a shuffle and results seem alright.<br>
 I'm curious what will driver do if hardware just don't support shuffle.<br>
 Luckily for AMD we have the <a href="https://github.com/GPUOpen-Tools/radeon_gpu_analyzer">Radeon GPU Analyzer</a>.<br>
-For gfx1010, it generate <code>ds_bpermute_b32</code>, which is a shuffle as in the twitter thread.<br>
+I ran RGA on a AMD Radeon R9 Fury, not sure if the results will vary on GPU or driver though.<br>
+For gfx1010, it generate <code>ds_bpermute_b32</code>, which is a shuffle as mentioned in the twitter thread.<br>
 For gfx702, GCN2, the generated code is much longer. <a href="https://pastebin.com/gr0ivzg3">Pastebin</a>.</p>
-<pre><code>// In HLSL it might look like this
+<pre><code>// The HLSL might look like this
 // Every lane keeps checking till itself becomes the first lane, then do the actual work. Nice trick
 while (true)
 {
@@ -153,7 +160,7 @@ while (true)
 		break;
 	}
 }
-</code></pre><p>See full sample in <a href="http://shader-playground.timjones.io/2fc43f77f626c4883e1b1ed23fd8b2e1">Shader Playground</a><br>
+</code></pre><p>A full sample in <a href="http://shader-playground.timjones.io/2fc43f77f626c4883e1b1ed23fd8b2e1">Shader Playground</a><br>
 Somehow an extra if is needed for DXC to generate a loop correctly&hellip;</p>
 <hr>
 <h2 id="globallycoherent">globallycoherent</h2>
@@ -167,10 +174,10 @@ I made <a href="https://github.com/silvesthu/ComputeShaderPlayground/blob/global
 <p>The sample works as,</p>
 <ul>
 <li>Group 0 write uav</li>
-<li>Group 1 do some heavy lifting</li>
+<li>Group 1 do some heavy lifting to wait for Group 0</li>
 <li>Group 1 write uav <strong>(this write will be ignored by later read if globallycoherent is not used)</strong></li>
-<li>Group 0 wait on Group 1 with a flag/counter</li>
-<li>Group 0 read uav (also write again as output)</li>
+<li>Group 0 wait on Group 1 with a counter</li>
+<li>Group 0 read uav</li>
 </ul>
 <p>I assume the underlying issue is, UAV access is L1 coherent by default,<br>
 and during shader execution, there is no other way to flush L1, bypass is a reasonable choice.<br>
@@ -182,13 +189,10 @@ but it is still more intuitive to understand globallycoherent from cache hierarc
 e.g. Atomic operations ensure global coherence by themselves.<br>
 But multi-phase processing, like mip pyramid generation in reference,<br>
 is where globallycoherent should be taken into consideration.</p>
-<ul>
-<li>Reference
+<p><strong>Reference</strong></p>
 <ul>
 <li><a href="https://twitter.com/sebaaltonen/status/1115717152244420608">Related discussion on twitter</a></li>
 <li><a href="https://gist.github.com/sebbbi/6cfbec7ab343924dad9b7ee48ef3ba6c">Single pass globallycoherent mip pyramid generation by @SebAaltonen</a></li>
-</ul>
-</li>
 </ul>
 
     
