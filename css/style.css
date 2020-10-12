@@ -219,6 +219,11 @@ h1, h2, h3 {
 }
 
 /* code  */
+code {    
+    color: #C92622;
+    background-color: #2C2F30;
+}
+
 pre {
     overflow: auto;
     background-color: #2C2F30;

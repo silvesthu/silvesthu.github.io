@@ -162,6 +162,7 @@ while (true)
 }
 </code></pre><p>A full sample in <a href="http://shader-playground.timjones.io/2fc43f77f626c4883e1b1ed23fd8b2e1">Shader Playground</a><br>
 Somehow an extra if is needed for DXC to generate a loop correctly&hellip;</p>
+<p>NVIDIA equivalent seems to be <code>NvShfl/shuffleNV</code> described as <strong>Indexed Any-to-Any Shuffle</strong> in <a href="https://developer.nvidia.com/reading-between-threads-shader-intrinsics">Reading Between The Threads: Shader Intrinsics</a>.</p>
 <hr>
 <h2 id="globallycoherent">globallycoherent</h2>
 <p>The <a href="https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/sm5-object-rwstructuredbuffer">document</a> describes this this keyword as</p>
