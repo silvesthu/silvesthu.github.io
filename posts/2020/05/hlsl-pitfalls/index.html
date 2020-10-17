@@ -84,12 +84,17 @@
   <ul>
     <li><a href="#denormalized-float-small-floatlarge-uint">Denormalized float, small float/large uint</a></li>
     <li><a href="#nonuniformresourceindex">NonUniformResourceIndex</a></li>
-    <li><a href="#wavereadlaneat">WaveReadLaneAt</a></li>
+    <li><a href="#wavereadlaneat">WaveReadLaneAt</a>
+      <ul>
+        <li><a href="#after">After</a></li>
+        <li><a href="#before">Before</a></li>
+      </ul>
+    </li>
     <li><a href="#globallycoherent">globallycoherent</a></li>
   </ul>
 </nav>
     <hr />
-    <p>I've encountered several issues of HLSL, and lucky enough found most workaround/solution on internet.<br>
+    <p>I've encountered several issues of HLSL, and lucky enough found most workaround/solution on the internet.<br>
 It doesn't feel right for anyone to remember all these.</p>
 <h2 id="denormalized-float-small-floatlarge-uint">Denormalized float, small float/large uint</h2>
 <p><strong>This is a FXC only issue.</strong></p>
@@ -104,14 +109,15 @@ I wonder how one can write to a R32_FLOAT correctly.<br>
 <code>return 0x00800000; =&gt; return 0;</code><br>
 <a href="http://shader-playground.timjones.io/195e9f0e3b92cd603fd4a604fdebe72f">ShaderPlayground</a></p>
 <p>Unlike the denormalized case,<br>
-small float/large uint stay alive during calculation.<br>
-It only becomes problem when exporting them, to render target or UAV.</p>
+small float/large uint stay alive during the calculation.<br>
+It only becomes a problem when exporting them, to render target or UAV.</p>
 <p>Thank god at least compile-time constants acts in the same way.</p>
 <hr>
 <h2 id="nonuniformresourceindex">NonUniformResourceIndex</h2>
-<p>This is rather simple.<br>
-<a href="https://docs.microsoft.com/en-us/windows/win32/direct3d12/resource-binding-in-hlsl#resource-types-and-arrays">https://docs.microsoft.com/en-us/windows/win32/direct3d12/resource-binding-in-hlsl#resource-types-and-arrays</a><br>
-One need to add the <code>NonUniformResourceIndex</code> when accessing array with non-uniform index.</p>
+<p>This is rather simple.  From <a href="https://docs.microsoft.com/en-us/windows/win32/direct3d12/resource-binding-in-hlsl#resource-types-and-arrays">Microsoft Docs</a></p>
+<blockquote>
+<p>One need to add the <code>NonUniformResourceIndex</code> when accessing array with non-uniform index.</p>
+</blockquote>
 <pre><code>tex1[NonUniformResourceIndex(myMaterialID)].Sample(samp[NonUniformResourceIndex(samplerID)], texCoords);
 </code></pre><p>The evil part is, even if you don't follow compiler won't complain about it.<br>
 Then you'll find it breaks on some GPUs.<br>
@@ -122,7 +128,24 @@ Further detail can be found here.<br>
 also mentioned this keyword (with annotated ISA!).</p>
 <hr>
 <h2 id="wavereadlaneat">WaveReadLaneAt</h2>
-<p><a href="https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/wavereadlaneat">https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/wavereadlaneat</a></p>
+<p>Since Microsoft has a update to the documents on <a href="https://github.com/MicrosoftDocs/win32/commit/803a98ea702c4fcf8ba2b80e5ab1bca54ebfa05a#diff-64753bb1ca6424ec22c87245f67a8a9b">WaveReadLaneAt</a> on Jun 2020,<br>
+I split this section into 2 parts to keep up with the latest version and also keep some old observations.</p>
+<h3 id="after">After</h3>
+<blockquote>
+<p>The resulting value is the result of expr. It will be uniform if laneIndex is uniform.</p>
+</blockquote>
+<p>Now it's clear <code>WaveReadLaneAt</code> supports both uniform or non-uniform laneIndex.
+Here's the commit message.</p>
+<blockquote>
+<p>The HLSL compiler team has agreed to this change, which is more consistent with the later specifications, but failed to update this document.</p>
+</blockquote>
+<p>It is hard to say having one function to work in both scenarios is good or bad.<br>
+This relates to the facts that the uniformness is already quite unclear in DXIL,<br>
+and lane count is hardware-dependent if not driver-dependent.<br>
+<a href="https://asawicki.info/news_1734_which_values_are_scalar_in_a_shader">Which Values Are Scalar in a Shader? by Adam Sawicki</a> have a wider discussion over it.<br>
+(Actually I learned about the update from this one.)</p>
+<h3 id="before">Before</h3>
+<p><strong>Note this part is written before the update.</strong></p>
 <blockquote>
 <p>The input lane index must be uniform across the wave.<br>
 This function is effectively a broadcast of the value in the laneIndex’th lane.</p>
@@ -132,19 +155,19 @@ Now That's confusing.<br>
 Here's a sample on <a href="http://shader-playground.timjones.io/60ec03f77dfcbfa9f1951327cf80cede">Shader Playground</a>.</p>
 <p>As DXC just gives</p>
 <pre><code>%6 = call i32 @dx.op.waveReadLaneAt.i32(i32 117, i32 %2, i32 %5)
-</code></pre><p>My guess is it doesn't actually check whether a variable is uniform or not, thus no error reported.<br>
+</code></pre><p>My guess is it doesn't actually check whether a variable is uniform or not, thus no error is reported.<br>
 So why the restriction in the first place?</p>
 <p><a href="https://twitter.com/SebAaltonen/status/1095183824290484226">https://twitter.com/SebAaltonen/status/1095183824290484226</a></p>
 <blockquote>
 <p>WaveReadLaneAt must have wave uniform index. Docs say so. SM 6.0 wave intrinsics were modeled after GCN2 hardware (original Xbox One). GCN3 additions (DS_PERMUTE) and Nvidia/Intel equivalents are not exposed. GCN3+ and all Nvidia/Intel DX12 HW support full per lane stuffle.</p>
 </blockquote>
-<p>Turn out it need a specific instruction to perform on non-uniform index.<br>
+<p>Turn out it needs a specific instruction to perform on non-uniform index.<br>
 And it becomes a shuffle rather than a broadcast.<br>
 In GLSL/Vulkan, <code>subgroupBroadcast</code> and <code>subgroupShuffle</code> are well defined.<br>
 As described in <a href="https://www.khronos.org/assets/uploads/developers/library/2018-vulkan-devday/06-subgroups.pdf">HLSL/GLSL/SPRI-V mapping</a></p>
 <p>I checked on my Intel HD Graphics 620 (26.20.100.7639) and NVIDIA GeForce RTX 2070 (27.21.14.5638).<br>
-They behaves like a shuffle and results seem alright.<br>
-I'm curious what will driver do if hardware just don't support shuffle.<br>
+They behave like a shuffle and the results seem alright.<br>
+I'm curious about what will driver do if hardware just don't support shuffle.<br>
 Luckily for AMD we have the <a href="https://github.com/GPUOpen-Tools/radeon_gpu_analyzer">Radeon GPU Analyzer</a>.<br>
 I ran RGA on a AMD Radeon R9 Fury, not sure if the results will vary on GPU or driver though.<br>
 For gfx1010, it generate <code>ds_bpermute_b32</code>, which is a shuffle as mentioned in the twitter thread.<br>
