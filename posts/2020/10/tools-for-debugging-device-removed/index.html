@@ -18,7 +18,7 @@
             Indefinite Seven
         
     </a>
-    <div>Blog by Ken Hu</div>
+    <div>GameDev & Graphics</div>
     <br/>
     </header>
 
@@ -113,7 +113,7 @@ Here's the list of tools, along with some related links and tips I've gathered.<
 <li>Prevention is better than cure!</li>
 <li>Both can be enabled on a PIX GPU capture</li>
 <li>Both slow down application a lot, which may affect reproducibility</li>
-<li><em>dxcpl.exe</em> allows os-wide control to enable DebugLayer</li>
+<li><strong>dxcpl.exe</strong> allows os-wide control to enable DebugLayer</li>
 <li>GBV takes a long time to convert DXBC to DXIL internally. Usually unacceptable for a large quantity</li>
 <li>GBV is still not very stable now (2020/10). Multiple crash reports on DirectX discord</li>
 <li>Documentation
@@ -151,7 +151,7 @@ Here's the list of tools, along with some related links and tips I've gathered.<
 </ul>
 <h3 id="gpuview">GPUView</h3>
 <ul>
-<li>Show <em>GPU Hardware Queue</em> and <em>Context CPU Queue</em> if capturable</li>
+<li>Show <strong>GPU Hardware Queue</strong> and <strong>Context CPU Queue</strong> if capturable</li>
 <li>Good way to find out which queue caused TDR</li>
 <li>Documentation
 <ul>
@@ -162,17 +162,17 @@ Here's the list of tools, along with some related links and tips I've gathered.<
 <h3 id="d3d12-device-removed-extended-data-dred">D3D12 Device Removed Extended Data (DRED)</h3>
 <ul>
 <li>API provided for integration</li>
-<li><em>Auto-Breadcrumbs</em> helps to narrow down problematic command in CommandList</li>
-<li><em>D3DDred.js</em> can extract DRED information from a full dump. Works with both old and new WinDbg</li>
+<li><strong>Auto-Breadcrumbs</strong> helps to narrow down problematic command in CommandList</li>
+<li><strong>D3DDred.js</strong> can extract DRED information from a full dump. Works with both old and new WinDbg</li>
 <li>DRED 1.1 (Windows 10 1903)
 <ul>
-<li><em>Page Fault Data</em> provides information on the resource that causes the page fault</li>
+<li><strong>Page Fault Data</strong> provides information on the resource that causes the page fault</li>
 </ul>
 </li>
 <li>DRED 1.2 (Windows 10 2004)
 <ul>
-<li><em>Breadcrumb Context Strings</em> allows annotating breadcrumb with user-defined names</li>
-<li><em>D3DConfig.exe</em> allows os-wide control to enable DRED. Use with <em>D3DDred.js</em> then no integration is needed</li>
+<li><strong>Breadcrumb Context Strings</strong> allows annotating breadcrumb with user-defined names</li>
+<li><strong>D3DConfig.exe</strong> allows os-wide control to enable DRED. Use with <strong>D3DDred.js</strong> then no integration is needed</li>
 </ul>
 </li>
 <li>Documentation
@@ -187,12 +187,12 @@ Here's the list of tools, along with some related links and tips I've gathered.<
 <h3 id="nvidia-aftermath">NVIDIA Aftermath</h3>
 <ul>
 <li>API provided for integration</li>
-<li>Generate GPU dump <em>.nv-gpudmp</em> on crash</li>
+<li>Generate GPU dump .nv-gpudmp on crash</li>
 <li>Show running shaders with sources associated (if available)</li>
-<li>Show GPU state (<em>Graphics Pipeline</em>, <em>Vertex/Tessellation/Geometry</em>, etc.)</li>
+<li>Show GPU state (Graphics Pipeline, Vertex/Tessellation/Geometry, etc.)</li>
 <li>Show CommandList markers (similar to breadcrumbs)</li>
 <li>Show page fault information (if available)</li>
-<li><em>nv-nsight-remote-monitor.exe</em> allows os-wide control to enable Aftermath</li>
+<li><strong>nv-nsight-remote-monitor.exe</strong> allows os-wide control to enable Aftermath</li>
 <li>Works only on NVIDIA Pascal architecture GPUs and newer</li>
 <li>Documentation
 <ul>
@@ -213,7 +213,7 @@ Here's the list of tools, along with some related links and tips I've gathered.<
 <li>Some facts
 <ul>
 <li>Error may also cause TDR</li>
-<li>Reproducibility may be affected by <em>Synchronized Command Queue Validation</em> of DebugLayer</li>
+<li>Reproducibility may be affected by <strong>Synchronized Command Queue Validation</strong> of DebugLayer</li>
 <li>GBV need DebugLayer enabled, DRED don't</li>
 </ul>
 </li>
@@ -224,7 +224,7 @@ Here's the list of tools, along with some related links and tips I've gathered.<
 <ul>
 <li>Callback on resource destruction
 <ul>
-<li><em>ID3DDestructionNotifier</em></li>
+<li>ID3DDestructionNotifier</li>
 <li><a href="https://twitter.com/_Humus_/status/1141602950948761600">https://twitter.com/_Humus_/status/1141602950948761600</a></li>
 <li><a href="https://github.com/MicrosoftDocs/sdk-api/pull/393">https://github.com/MicrosoftDocs/sdk-api/pull/393</a></li>
 </ul>
@@ -240,7 +240,7 @@ Here's the list of tools, along with some related links and tips I've gathered.<
     <div class="nav-next-prev">
         <div class="nav-prev">
             
-                <a href="https://silvesthu.github.io/posts/2020/06/gpu-optimization-for-gamedev/"><i class="fas fa-chevron-left"></i></a>
+                <a href="https://silvesthu.github.io/posts/2020/05/hlsl-pitfalls/"><i class="fas fa-chevron-left"></i></a>
             
         </div>
         <a class="nav-top" href="#">top</i></a>
@@ -260,6 +260,7 @@ Here's the list of tools, along with some related links and tips I've gathered.<
       crossorigin="anonymous"
       async>
   </script>
+
 <div class="footer-content">
 
   <div class="contact-info">
@@ -269,6 +270,17 @@ Here's the list of tools, along with some related links and tips I've gathered.<
 
 
 </div>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {
+    inlineMath: [['$','$']]
+  }
+});
+</script>
+
 </footer></main>
     </body>
     <script src=https://silvesthu.github.io/js/navbutton.js></script>
