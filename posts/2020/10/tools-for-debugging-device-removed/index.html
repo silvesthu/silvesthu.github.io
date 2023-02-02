@@ -85,12 +85,12 @@
     <li><a href="#introduction">Introduction</a></li>
     <li><a href="#tools">Tools</a>
       <ul>
+        <li><a href="#nvidia-aftermath">NVIDIA Aftermath</a></li>
         <li><a href="#debuglayer--gpu-based-validation-gbv">DebugLayer & GPU Based Validation (GBV)</a></li>
-        <li><a href="#openexistingheapfromaddress--writebufferimmediate">OpenExistingHeapFromAddress & WriteBufferImmediate</a></li>
         <li><a href="#pix">PIX</a></li>
         <li><a href="#gpuview">GPUView</a></li>
+        <li><a href="#openexistingheapfromaddress--writebufferimmediate">OpenExistingHeapFromAddress & WriteBufferImmediate</a></li>
         <li><a href="#d3d12-device-removed-extended-data-dred">D3D12 Device Removed Extended Data (DRED)</a></li>
-        <li><a href="#nvidia-aftermath">NVIDIA Aftermath</a></li>
       </ul>
     </li>
     <li><a href="#reference">Reference</a></li>
@@ -108,6 +108,28 @@ Here's the list of tools, along with some related links and tips I've gathered.<
 <li><a href="https://www.youtube.com/watch?v=VaGcs5-W6S4">Youtube | Aftermath: Advances in GPU Crash Debugging</a></li>
 </ul>
 <h2 id="tools">Tools</h2>
+<h3 id="nvidia-aftermath">NVIDIA Aftermath</h3>
+<ul>
+<li>API provided for integration</li>
+<li>Generate GPU dump .nv-gpudmp on crash</li>
+<li>Show running shaders with sources associated (if available)</li>
+<li>Show GPU state (Graphics Pipeline, Vertex/Tessellation/Geometry, etc.)</li>
+<li>Show CommandList markers (similar to breadcrumbs)</li>
+<li>Show MMU fault information (if available)
+<ul>
+<li>Access type (read/write/atomic), originating unit</li>
+<li>Failing warp and instruction</li>
+</ul>
+</li>
+<li><strong>nv-nsight-remote-monitor.exe</strong> allows os-wide control to enable Aftermath</li>
+<li>Works only on NVIDIA Pascal architecture GPUs and newer</li>
+<li>Documentation
+<ul>
+<li><a href="https://developer.nvidia.com/nsight-aftermath">https://developer.nvidia.com/nsight-aftermath</a></li>
+<li><a href="https://github.com/NVIDIA/nsight-aftermath-samples">https://github.com/NVIDIA/nsight-aftermath-samples</a></li>
+</ul>
+</li>
+</ul>
 <h3 id="debuglayer--gpu-based-validation-gbv">DebugLayer &amp; GPU Based Validation (GBV)</h3>
 <ul>
 <li>Prevention is better than cure!</li>
@@ -129,17 +151,6 @@ Here's the list of tools, along with some related links and tips I've gathered.<
 </ul>
 </li>
 </ul>
-<h3 id="openexistingheapfromaddress--writebufferimmediate">OpenExistingHeapFromAddress &amp; WriteBufferImmediate</h3>
-<ul>
-<li>Heap stay alive after a crash</li>
-<li>Could be used to implement breadcrumbs</li>
-<li>Documentation
-<ul>
-<li><a href="https://devblogs.microsoft.com/directx/announcing-new-directx-12-features/">https://devblogs.microsoft.com/directx/announcing-new-directx-12-features/</a></li>
-<li><a href="https://channel9.msdn.com/Events/GDC/GDC-2018/10?ocid=player">https://channel9.msdn.com/Events/GDC/GDC-2018/10?ocid=player</a></li>
-</ul>
-</li>
-</ul>
 <h3 id="pix">PIX</h3>
 <ul>
 <li>Debug TDR if capturable</li>
@@ -156,6 +167,17 @@ Here's the list of tools, along with some related links and tips I've gathered.<
 <li>Documentation
 <ul>
 <li><a href="https://docs.microsoft.com/ja-jp/windows-hardware/drivers/display/using-gpuview">https://docs.microsoft.com/ja-jp/windows-hardware/drivers/display/using-gpuview</a></li>
+</ul>
+</li>
+</ul>
+<h3 id="openexistingheapfromaddress--writebufferimmediate">OpenExistingHeapFromAddress &amp; WriteBufferImmediate</h3>
+<ul>
+<li>Heap stay alive after a crash</li>
+<li>Could be used to implement breadcrumbs</li>
+<li>Documentation
+<ul>
+<li><a href="https://devblogs.microsoft.com/directx/announcing-new-directx-12-features/">https://devblogs.microsoft.com/directx/announcing-new-directx-12-features/</a></li>
+<li><a href="https://channel9.msdn.com/Events/GDC/GDC-2018/10?ocid=player">https://channel9.msdn.com/Events/GDC/GDC-2018/10?ocid=player</a></li>
 </ul>
 </li>
 </ul>
@@ -181,23 +203,6 @@ Here's the list of tools, along with some related links and tips I've gathered.<
 <li><a href="https://microsoft.github.io/DirectX-Specs/d3d/DeviceRemovedExtendedData.html">https://microsoft.github.io/DirectX-Specs/d3d/DeviceRemovedExtendedData.html</a></li>
 <li><a href="https://devblogs.microsoft.com/directx/dred-v1-2-supports-pix-marker-and-event-strings-in-auto-breadcrumbs/">https://devblogs.microsoft.com/directx/dred-v1-2-supports-pix-marker-and-event-strings-in-auto-breadcrumbs/</a></li>
 <li><a href="https://github.com/microsoft/DirectX-Debugging-Tools">https://github.com/microsoft/DirectX-Debugging-Tools</a></li>
-</ul>
-</li>
-</ul>
-<h3 id="nvidia-aftermath">NVIDIA Aftermath</h3>
-<ul>
-<li>API provided for integration</li>
-<li>Generate GPU dump .nv-gpudmp on crash</li>
-<li>Show running shaders with sources associated (if available)</li>
-<li>Show GPU state (Graphics Pipeline, Vertex/Tessellation/Geometry, etc.)</li>
-<li>Show CommandList markers (similar to breadcrumbs)</li>
-<li>Show page fault information (if available)</li>
-<li><strong>nv-nsight-remote-monitor.exe</strong> allows os-wide control to enable Aftermath</li>
-<li>Works only on NVIDIA Pascal architecture GPUs and newer</li>
-<li>Documentation
-<ul>
-<li><a href="https://developer.nvidia.com/nsight-aftermath">https://developer.nvidia.com/nsight-aftermath</a></li>
-<li><a href="https://github.com/NVIDIA/nsight-aftermath-samples">https://github.com/NVIDIA/nsight-aftermath-samples</a></li>
 </ul>
 </li>
 </ul>
