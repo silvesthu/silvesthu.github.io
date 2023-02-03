@@ -114,14 +114,14 @@ Here's the list of tools, along with some related links and tips I've gathered.<
 <li>Generate GPU dump .nv-gpudmp on crash</li>
 <li>Show running shaders with sources associated (if available)</li>
 <li>Show GPU state (Graphics Pipeline, Vertex/Tessellation/Geometry, etc.)</li>
-<li>Show CommandList markers (similar to breadcrumbs)</li>
+<li>Show CommandList checkpoints (similar to breadcrumbs)</li>
 <li>Show MMU fault information (if available)
 <ul>
 <li>Access type (read/write/atomic), originating unit</li>
 <li>Failing warp and instruction</li>
 </ul>
 </li>
-<li><strong>nv-nsight-remote-monitor.exe</strong> allows os-wide control to enable Aftermath</li>
+<li><strong>nv-nsight-remote-monitor.exe</strong> allows to enable Aftermath os-wide with hook</li>
 <li>Works only on NVIDIA Pascal architecture GPUs and newer</li>
 <li>Documentation
 <ul>
@@ -136,15 +136,10 @@ Here's the list of tools, along with some related links and tips I've gathered.<
 <li>Both can be enabled on a PIX GPU capture</li>
 <li>Both slow down application a lot, which may affect reproducibility</li>
 <li><strong>dxcpl.exe</strong> allows os-wide control to enable DebugLayer</li>
-<li>GBV takes a long time to convert DXBC to DXIL internally. Usually unacceptable for a large quantity</li>
-<li>GBV is still not very stable now (2020/10). Multiple crash reports on DirectX discord</li>
+<li>GBV takes a long time to convert DXBC to DXIL internally. Might be not for practical use</li>
 <li>Documentation
 <ul>
 <li><a href="https://docs.microsoft.com/en-us/windows/win32/direct3d12/using-d3d12-debug-layer-gpu-based-validation">https://docs.microsoft.com/en-us/windows/win32/direct3d12/using-d3d12-debug-layer-gpu-based-validation</a></li>
-</ul>
-</li>
-<li>Fine control
-<ul>
 <li><a href="https://docs.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/ne-d3d12sdklayers-d3d12_debug_feature">https://docs.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/ne-d3d12sdklayers-d3d12_debug_feature</a></li>
 <li><a href="https://docs.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/ns-d3d12sdklayers-d3d12_debug_device_gpu_based_validation_settings">https://docs.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/ns-d3d12sdklayers-d3d12_debug_device_gpu_based_validation_settings</a></li>
 <li><a href="https://docs.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/ns-d3d12sdklayers-d3d12_debug_device_gpu_slowdown_performance_factor">https://docs.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/ns-d3d12sdklayers-d3d12_debug_device_gpu_slowdown_performance_factor</a></li>
@@ -212,10 +207,9 @@ Here's the list of tools, along with some related links and tips I've gathered.<
 <ul>
 <li>Talk on CEDEC 2020, in Japanese</li>
 <li>Detailed information to tools, methods to categorize crash, and also corresponding strategies</li>
-<li>Super recommended!</li>
 <li><a href="https://cedil.cesa.or.jp/cedil_sessions/view/2258">Slide</a></li>
 <li><a href="https://shikihuiku.github.io/post/cedec2020_prescriptions_for_deviceremoval/">Supplementary (blog)</a></li>
-<li>Some facts
+<li>Tips
 <ul>
 <li>Error may also cause TDR</li>
 <li>Reproducibility may be affected by <strong>Synchronized Command Queue Validation</strong> of DebugLayer</li>
