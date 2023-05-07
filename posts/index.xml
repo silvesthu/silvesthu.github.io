@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Posts on Indefinite Seven</title>
+    <link>https://silvesthu.github.io/posts/</link>
+    <description>Recent content in Posts on Indefinite Seven</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 03 Oct 2020 20:24:50 +0900</lastBuildDate>
+    
+	<atom:link href="https://silvesthu.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Tools for debugging Device Removed</title>
+      <link>https://silvesthu.github.io/posts/2020/10/tools-for-debugging-device-removed/</link>
+      <pubDate>Sat, 03 Oct 2020 20:24:50 +0900</pubDate>
+      
+      <guid>https://silvesthu.github.io/posts/2020/10/tools-for-debugging-device-removed/</guid>
+      <description>Although there is a handful of tools created for debugging a Device Removed, it is still difficult sometimes to locate the exact cause.
+Besides, how reliable these tools are is another mystery :p
+It would do no harm to try as many ways as possible when fighting Device Removed.
+Here&#39;s the list of tools, along with some related links and tips I&#39;ve gathered.
+Introduction  Youtube | Aftermath: Advances in GPU Crash Debugging  Tools NVIDIA Aftermath  API provided for integration Generate GPU dump .</description>
+    </item>
+    
+    <item>
+      <title>HLSL pitfalls</title>
+      <link>https://silvesthu.github.io/posts/2020/05/hlsl-pitfalls/</link>
+      <pubDate>Sun, 24 May 2020 07:45:52 +0900</pubDate>
+      
+      <guid>https://silvesthu.github.io/posts/2020/05/hlsl-pitfalls/</guid>
+      <description>I&#39;ve encountered several issues of HLSL, and lucky enough found most workaround/solution on the internet.
+It doesn&#39;t feel right for anyone to remember all these.
+Denormalized float, small float/large uint This is a FXC only issue.
+First, there is asfloat(0x7FFFFF) =&amp;gt; 0 from
+Low-level Shader Optimization for Next-Gen and DX11 by Emil Persson.
+That is, asfloat always gives 0 if you feed bits fit denormalized pattern.
+Then, floats smaller than 1e-6 won&#39;t make their way into output.</description>
+    </item>
+    
+    <item>
+      <title>Wave Intrinsics Hello World</title>
+      <link>https://silvesthu.github.io/posts/2020/05/wave-intrinsics-hello-world/</link>
+      <pubDate>Sat, 09 May 2020 00:51:14 +0900</pubDate>
+      
+      <guid>https://silvesthu.github.io/posts/2020/05/wave-intrinsics-hello-world/</guid>
+      <description>After work with DirectX 12 for a while,
+with some need to validate shader using Wave Intrinsics,
+I wrote a hello world as a playground.
+To keep things simple, here are some decisions made in advance.
+ Wave Intrinsics  DirectX 12 Shader Model 6.0+  DirectXShaderCompiler (DXC)     Minimal setup  Console program  No window No swapchain No render loop   Compute Shader only No descriptor heap Minimum abstraction No error handling (except shader compilation)   Debugging  Read back output through UAV printf    Result Here is the repo ComputeShaderPlayground on Github.</description>
+    </item>
+    
+  </channel>
+</rss>

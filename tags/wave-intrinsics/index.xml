@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Wave Intrinsics on Indefinite Seven</title>
+    <link>https://silvesthu.github.io/tags/wave-intrinsics/</link>
+    <description>Recent content in Wave Intrinsics on Indefinite Seven</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 09 May 2020 00:51:14 +0900</lastBuildDate>
+    
+	<atom:link href="https://silvesthu.github.io/tags/wave-intrinsics/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Wave Intrinsics Hello World</title>
+      <link>https://silvesthu.github.io/posts/2020/05/wave-intrinsics-hello-world/</link>
+      <pubDate>Sat, 09 May 2020 00:51:14 +0900</pubDate>
+      
+      <guid>https://silvesthu.github.io/posts/2020/05/wave-intrinsics-hello-world/</guid>
+      <description>After work with DirectX 12 for a while,
+with some need to validate shader using Wave Intrinsics,
+I wrote a hello world as a playground.
+To keep things simple, here are some decisions made in advance.
+ Wave Intrinsics  DirectX 12 Shader Model 6.0+  DirectXShaderCompiler (DXC)     Minimal setup  Console program  No window No swapchain No render loop   Compute Shader only No descriptor heap Minimum abstraction No error handling (except shader compilation)   Debugging  Read back output through UAV printf    Result Here is the repo ComputeShaderPlayground on Github.</description>
+    </item>
+    
+  </channel>
+</rss>

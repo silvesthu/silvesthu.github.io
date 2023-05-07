@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="blog, game, graphics, programming">
+    <meta name="Author" content="Ken Hu">
+    <meta name="keywords" content="blog, game, graphics, programming">
+    <link rel="stylesheet" href=https://silvesthu.github.io/css/syntax.css>
+    <link rel="stylesheet" href=https://silvesthu.github.io/css/style.css>
+    <script src="https://kit.fontawesome.com/1b7478c139.js" crossorigin="anonymous"></script>
+    <title>Indefinite Seven</title>
+  </head><body><aside id="sidenav">
+    <header>
+    
+
+    <a id="branding" href=https://silvesthu.github.io/>
+        
+            Indefinite Seven
+        
+    </a>
+    <div>GameDev & Graphics</div>
+    <br/>
+    </header>
+
+    <nav>
+        
+            		
+            <a href="/posts/"
+                
+            >
+                <i class="fas fa-keyboard fa-ms"></i>
+                <span>Posts</span>
+            </a>
+        
+            		
+            <a href="/tags"
+                
+            >
+                <i class="fas fa-tags fa-ms"></i>
+                <span>Tags</span>
+            </a>
+        
+            		
+            <a href="/index.xml"
+                
+            >
+                <i class="fas fa-rss fa-ms"></i>
+                <span>RSS</span>
+            </a>
+        
+            		
+            <a href="https://github.com/silvesthu"
+                
+                    target="_blank"
+                
+            >
+                <i class="fab fa-github fa-ms"></i>
+                <span>Github</span>
+            </a>
+        
+            		
+            <a href="https://twitter.com/kenhu07"
+                
+                    target="_blank"
+                
+            >
+                <i class="fab fa-twitter fa-ms"></i>
+                <span>Twitter</span>
+            </a>
+        
+    </nav>
+</aside>
+<main id="main">
+            <a href="javascript:void(0)" id="closebtn" onclick="navToggle()"><i class="fas fa-bars fa-lg"></i></a>
+            <div class="content">
+    
+    <h1 id="title">Tools for debugging Device Removed</h1>
+    
+    
+       <i class="far fa-calendar-alt"></i> Oct 3 2020
+    
+    
+    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#introduction">Introduction</a></li>
+    <li><a href="#tools">Tools</a>
+      <ul>
+        <li><a href="#nvidia-aftermath">NVIDIA Aftermath</a></li>
+        <li><a href="#debuglayer--gpu-based-validation-gbv">DebugLayer & GPU Based Validation (GBV)</a></li>
+        <li><a href="#pix">PIX</a></li>
+        <li><a href="#gpuview">GPUView</a></li>
+        <li><a href="#openexistingheapfromaddress--writebufferimmediate">OpenExistingHeapFromAddress & WriteBufferImmediate</a></li>
+        <li><a href="#d3d12-device-removed-extended-data-dred">D3D12 Device Removed Extended Data (DRED)</a></li>
+      </ul>
+    </li>
+    <li><a href="#reference">Reference</a></li>
+    <li><a href="#related-topics">Related topics</a></li>
+  </ul>
+</nav>
+    <hr />
+    <p>Although there is a handful of tools created for debugging a Device Removed, <br>
+it is still difficult sometimes to locate the exact cause.<br>
+Besides, how reliable these tools are is another mystery :p</p>
+<p>It would do no harm to try as many ways as possible when fighting Device Removed.<br>
+Here's the list of tools, along with some related links and tips I've gathered.</p>
+<h2 id="introduction">Introduction</h2>
+<ul>
+<li><a href="https://www.youtube.com/watch?v=VaGcs5-W6S4">Youtube | Aftermath: Advances in GPU Crash Debugging</a></li>
+</ul>
+<h2 id="tools">Tools</h2>
+<h3 id="nvidia-aftermath">NVIDIA Aftermath</h3>
+<ul>
+<li>API provided for integration</li>
+<li>Generate GPU dump .nv-gpudmp on crash</li>
+<li>Show running shaders with sources associated (if available)</li>
+<li>Show GPU state (Graphics Pipeline, Vertex/Tessellation/Geometry, etc.)</li>
+<li>Show CommandList checkpoints (similar to breadcrumbs)</li>
+<li>Show MMU fault information (if available)
+<ul>
+<li>Access type (read/write/atomic), originating unit</li>
+<li>Failing warp and instruction</li>
+</ul>
+</li>
+<li><strong>nv-nsight-remote-monitor.exe</strong> allows to enable Aftermath os-wide with hook</li>
+<li>Works only on NVIDIA Pascal architecture GPUs and newer</li>
+<li>Documentation
+<ul>
+<li><a href="https://developer.nvidia.com/nsight-aftermath">https://developer.nvidia.com/nsight-aftermath</a></li>
+<li><a href="https://github.com/NVIDIA/nsight-aftermath-samples">https://github.com/NVIDIA/nsight-aftermath-samples</a></li>
+</ul>
+</li>
+</ul>
+<h3 id="debuglayer--gpu-based-validation-gbv">DebugLayer &amp; GPU Based Validation (GBV)</h3>
+<ul>
+<li>Prevention is better than cure!</li>
+<li>Both can be enabled on a PIX GPU capture</li>
+<li>Both slow down application a lot, which may affect reproducibility</li>
+<li><strong>dxcpl.exe</strong> allows os-wide control to enable DebugLayer</li>
+<li>GBV takes a long time to convert DXBC to DXIL internally. Might be not for practical use</li>
+<li>Documentation
+<ul>
+<li><a href="https://docs.microsoft.com/en-us/windows/win32/direct3d12/using-d3d12-debug-layer-gpu-based-validation">https://docs.microsoft.com/en-us/windows/win32/direct3d12/using-d3d12-debug-layer-gpu-based-validation</a></li>
+<li><a href="https://docs.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/ne-d3d12sdklayers-d3d12_debug_feature">https://docs.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/ne-d3d12sdklayers-d3d12_debug_feature</a></li>
+<li><a href="https://docs.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/ns-d3d12sdklayers-d3d12_debug_device_gpu_based_validation_settings">https://docs.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/ns-d3d12sdklayers-d3d12_debug_device_gpu_based_validation_settings</a></li>
+<li><a href="https://docs.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/ns-d3d12sdklayers-d3d12_debug_device_gpu_slowdown_performance_factor">https://docs.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/ns-d3d12sdklayers-d3d12_debug_device_gpu_slowdown_performance_factor</a></li>
+</ul>
+</li>
+</ul>
+<h3 id="pix">PIX</h3>
+<ul>
+<li>Debug TDR if capturable</li>
+<li>Documentation
+<ul>
+<li><a href="https://devblogs.microsoft.com/pix/tdr-debugging/">https://devblogs.microsoft.com/pix/tdr-debugging/</a></li>
+</ul>
+</li>
+</ul>
+<h3 id="gpuview">GPUView</h3>
+<ul>
+<li>Show <strong>GPU Hardware Queue</strong> and <strong>Context CPU Queue</strong> if capturable</li>
+<li>Good way to find out which queue caused TDR</li>
+<li>Documentation
+<ul>
+<li><a href="https://docs.microsoft.com/ja-jp/windows-hardware/drivers/display/using-gpuview">https://docs.microsoft.com/ja-jp/windows-hardware/drivers/display/using-gpuview</a></li>
+</ul>
+</li>
+</ul>
+<h3 id="openexistingheapfromaddress--writebufferimmediate">OpenExistingHeapFromAddress &amp; WriteBufferImmediate</h3>
+<ul>
+<li>Heap stay alive after a crash</li>
+<li>Could be used to implement breadcrumbs</li>
+<li>Documentation
+<ul>
+<li><a href="https://devblogs.microsoft.com/directx/announcing-new-directx-12-features/">https://devblogs.microsoft.com/directx/announcing-new-directx-12-features/</a></li>
+<li><a href="https://channel9.msdn.com/Events/GDC/GDC-2018/10?ocid=player">https://channel9.msdn.com/Events/GDC/GDC-2018/10?ocid=player</a></li>
+</ul>
+</li>
+</ul>
+<h3 id="d3d12-device-removed-extended-data-dred">D3D12 Device Removed Extended Data (DRED)</h3>
+<ul>
+<li>API provided for integration</li>
+<li><strong>Auto-Breadcrumbs</strong> helps to narrow down problematic command in CommandList</li>
+<li><strong>D3DDred.js</strong> can extract DRED information from a full dump. Works with both old and new WinDbg</li>
+<li>DRED 1.1 (Windows 10 1903)
+<ul>
+<li><strong>Page Fault Data</strong> provides information on the resource that causes the page fault</li>
+</ul>
+</li>
+<li>DRED 1.2 (Windows 10 2004)
+<ul>
+<li><strong>Breadcrumb Context Strings</strong> allows annotating breadcrumb with user-defined names</li>
+<li><strong>D3DConfig.exe</strong> allows os-wide control to enable DRED. Use with <strong>D3DDred.js</strong> then no integration is needed</li>
+</ul>
+</li>
+<li>Documentation
+<ul>
+<li><a href="https://docs.microsoft.com/en-us/windows/win32/direct3d12/use-dred">https://docs.microsoft.com/en-us/windows/win32/direct3d12/use-dred</a></li>
+<li><a href="https://microsoft.github.io/DirectX-Specs/d3d/DeviceRemovedExtendedData.html">https://microsoft.github.io/DirectX-Specs/d3d/DeviceRemovedExtendedData.html</a></li>
+<li><a href="https://devblogs.microsoft.com/directx/dred-v1-2-supports-pix-marker-and-event-strings-in-auto-breadcrumbs/">https://devblogs.microsoft.com/directx/dred-v1-2-supports-pix-marker-and-event-strings-in-auto-breadcrumbs/</a></li>
+<li><a href="https://github.com/microsoft/DirectX-Debugging-Tools">https://github.com/microsoft/DirectX-Debugging-Tools</a></li>
+</ul>
+</li>
+</ul>
+<h2 id="reference">Reference</h2>
+<ul>
+<li>Device Removalの処方箋 by Masaya Takeshige
+<ul>
+<li>Talk on CEDEC 2020, in Japanese</li>
+<li>Detailed information to tools, methods to categorize crash, and also corresponding strategies</li>
+<li><a href="https://cedil.cesa.or.jp/cedil_sessions/view/2258">Slide</a></li>
+<li><a href="https://shikihuiku.github.io/post/cedec2020_prescriptions_for_deviceremoval/">Supplementary (blog)</a></li>
+<li>Tips
+<ul>
+<li>Error may also cause TDR</li>
+<li>Reproducibility may be affected by <strong>Synchronized Command Queue Validation</strong> of DebugLayer</li>
+<li>GBV need DebugLayer enabled, DRED don't</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="related-topics">Related topics</h2>
+<ul>
+<li>Callback on resource destruction
+<ul>
+<li>ID3DDestructionNotifier</li>
+<li><a href="https://twitter.com/_Humus_/status/1141602950948761600">https://twitter.com/_Humus_/status/1141602950948761600</a></li>
+<li><a href="https://github.com/MicrosoftDocs/sdk-api/pull/393">https://github.com/MicrosoftDocs/sdk-api/pull/393</a></li>
+</ul>
+</li>
+<li>Device Removed detection through fence
+<ul>
+<li><a href="https://github.com/MicrosoftDocs/sdk-api/pull/391/commits/e88a8b9157ba7c7ce0e883b9aec485c7dae5fe98">https://github.com/MicrosoftDocs/sdk-api/pull/391/commits/e88a8b9157ba7c7ce0e883b9aec485c7dae5fe98</a></li>
+</ul>
+</li>
+</ul>
+
+    
+    <div class="nav-next-prev">
+        <div class="nav-prev">
+            
+                <a href="https://silvesthu.github.io/posts/2020/05/hlsl-pitfalls/"><i class="fas fa-chevron-left"></i></a>
+            
+        </div>
+        <a class="nav-top" href="#">top</i></a>
+        <div class="nav-next">
+            
+                <a class="grayed-out" href="javascript:void()"><i class="fas fa-chevron-right"></i></a>
+            
+        </div>
+    </div>
+    
+
+            </div><footer>
+
+<div class="footer-content">
+
+  <div class="contact-info">
+      
+      
+  </div>
+
+
+</div>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {
+    inlineMath: [['$','$']]
+  }
+});
+</script>
+
+</footer></main>
+    </body>
+    <script src=https://silvesthu.github.io/js/navbutton.js></script>
+</html>
