@@ -1,178 +1,79 @@
-<!DOCTYPE html>
-<html><head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="blog, game, graphics, programming">
-    <meta name="Author" content="Ken Hu">
-    <meta name="keywords" content="blog, game, graphics, programming">
-    <link rel="stylesheet" href=https://silvesthu.github.io/css/syntax.css>
-    <link rel="stylesheet" href=https://silvesthu.github.io/css/style.css>
-    <script src="https://kit.fontawesome.com/1b7478c139.js" crossorigin="anonymous"></script>
-    <title>Indefinite Seven</title>
-  </head><body><aside id="sidenav">
-    <header>
-    
+<meta lang="en" charset="utf-8">
+<meta property="og:title" content="HLSL pitfalls" />
+<meta property="og:type" content="website">
+<meta property="og:description" content="Indefinite Seven">
 
-    <a id="branding" href=https://silvesthu.github.io/>
-        
-            Indefinite Seven
-        
-    </a>
-    <div>GameDev & Graphics</div>
-    <br/>
-    </header>
+**HLSL pitfalls**
+		2020/05/24
 
-    <nav>
-        
-            		
-            <a href="/posts/"
-                
-            >
-                <i class="fas fa-keyboard fa-ms"></i>
-                <span>Posts</span>
-            </a>
-        
-            		
-            <a href="/tags"
-                
-            >
-                <i class="fas fa-tags fa-ms"></i>
-                <span>Tags</span>
-            </a>
-        
-            		
-            <a href="/index.xml"
-                
-            >
-                <i class="fas fa-rss fa-ms"></i>
-                <span>RSS</span>
-            </a>
-        
-            		
-            <a href="https://github.com/silvesthu"
-                
-                    target="_blank"
-                
-            >
-                <i class="fab fa-github fa-ms"></i>
-                <span>Github</span>
-            </a>
-        
-            		
-            <a href="https://twitter.com/kenhu07"
-                
-                    target="_blank"
-                
-            >
-                <i class="fab fa-twitter fa-ms"></i>
-                <span>Twitter</span>
-            </a>
-        
-    </nav>
-</aside>
-<main id="main">
-            <a href="javascript:void(0)" id="closebtn" onclick="navToggle()"><i class="fas fa-bars fa-lg"></i></a>
-            <div class="content">
-    
-    <h1 id="title">HLSL pitfalls</h1>
-    
-    
-       <i class="far fa-calendar-alt"></i> May 24 2020
-    
-    
-    <nav id="TableOfContents">
-  <ul>
-    <li><a href="#denormalized-float-small-floatlarge-uint">Denormalized float, small float/large uint</a></li>
-    <li><a href="#nonuniformresourceindex">NonUniformResourceIndex</a></li>
-    <li><a href="#wavereadlaneat">WaveReadLaneAt</a>
-      <ul>
-        <li><a href="#after">After</a></li>
-        <li><a href="#before">Before</a></li>
-      </ul>
-    </li>
-    <li><a href="#globallycoherent">globallycoherent</a></li>
-  </ul>
-</nav>
-    <hr />
-    <p>I've encountered several issues of HLSL, and lucky enough found most workaround/solution on the internet.<br>
-It doesn't feel right for anyone to remember all these.</p>
-<h2 id="denormalized-float-small-floatlarge-uint">Denormalized float, small float/large uint</h2>
-<p><strong>This is a FXC only issue.</strong></p>
-<p>First, there is <code>asfloat(0x7FFFFF) =&gt; 0</code> from<br>
-<a href="https://www.slideshare.net/DevCentralAMD/lowlevel-shader-optimization-for-nextgen-and-dx11-by-emil-persson">Low-level Shader Optimization for Next-Gen and DX11 by Emil Persson</a>.<br>
-That is, <code>asfloat</code> always gives 0 if you feed bits fit denormalized pattern.</p>
-<p>Then, floats smaller than 1e-6 won't make their way into output.<br>
-<code>return 1e-7; =&gt; return 0;</code><br>
-I wonder how one can write to a R32_FLOAT correctly.<br>
-<a href="http://shader-playground.timjones.io/a0d2300aa58d50ccf28afdd8b66edf7a">ShaderPlayground</a></p>
-<p>Similarly, uint equal or larger than 0x00800000 (24 bit),<br>
-<code>return 0x00800000; =&gt; return 0;</code><br>
-<a href="http://shader-playground.timjones.io/195e9f0e3b92cd603fd4a604fdebe72f">ShaderPlayground</a></p>
-<p>Unlike the denormalized case,<br>
-small float/large uint stay alive during the calculation.<br>
-It only becomes a problem when exporting them, to render target or UAV.</p>
-<p>Thank god at least compile-time constants acts in the same way.</p>
-<hr>
-<h2 id="nonuniformresourceindex">NonUniformResourceIndex</h2>
-<p>This is rather simple.  From <a href="https://docs.microsoft.com/en-us/windows/win32/direct3d12/resource-binding-in-hlsl#resource-types-and-arrays">Microsoft Docs</a></p>
-<blockquote>
-<p>One need to add the <code>NonUniformResourceIndex</code> when accessing array with non-uniform index.</p>
-</blockquote>
-<pre><code>tex1[NonUniformResourceIndex(myMaterialID)].Sample(samp[NonUniformResourceIndex(samplerID)], texCoords);
-</code></pre><p>The evil part is, even if you don't follow compiler won't complain about it.<br>
-Then you'll find it breaks on some GPUs.<br>
-Further detail can be found here.<br>
-<a href="https://www.asawicki.info/news_1608_direct3d_12_-_watch_out_for_non-uniform_resource_index">Direct3D 12 - Watch out for non-uniform resource index! by Adam Sawicki</a></p>
-<p><strong>Update:</strong><br>
-<a href="https://gpuopen.com/learn/porting-detroit-2/">PORTING DETROIT: BECOME HUMAN FROM PLAYSTATION® 4 TO PC – PART 2</a><br>
-also mentioned this keyword (with annotated ISA!).</p>
-<hr>
-<h2 id="wavereadlaneat">WaveReadLaneAt</h2>
-<p>Since Microsoft has a update to the documents on <a href="https://github.com/MicrosoftDocs/win32/commit/803a98ea702c4fcf8ba2b80e5ab1bca54ebfa05a#diff-64753bb1ca6424ec22c87245f67a8a9b">WaveReadLaneAt</a> on Jun 2020,<br>
-I split this section into 2 parts to keep up with the latest version and also keep some old observations.</p>
-<h3 id="after">After</h3>
-<blockquote>
-<p>The resulting value is the result of expr. It will be uniform if laneIndex is uniform.</p>
-</blockquote>
-<p>Now it's clear <code>WaveReadLaneAt</code> supports both uniform or non-uniform laneIndex.
-Here's the commit message.</p>
-<blockquote>
-<p>The HLSL compiler team has agreed to this change, which is more consistent with the later specifications, but failed to update this document.</p>
-</blockquote>
-<p>It is hard to say having one function to work in both scenarios is good or bad.<br>
-This relates to the facts that the uniformness is already quite unclear in DXIL,<br>
-and lane count is hardware-dependent if not driver-dependent.<br>
-<a href="https://asawicki.info/news_1734_which_values_are_scalar_in_a_shader">Which Values Are Scalar in a Shader? by Adam Sawicki</a> have a wider discussion over it.<br>
-(Actually I learned about the update from this one.)</p>
-<h3 id="before">Before</h3>
-<p><strong>Note this part is written before the update.</strong></p>
-<blockquote>
-<p>The input lane index must be uniform across the wave.<br>
-This function is effectively a broadcast of the value in the laneIndex’th lane.</p>
-</blockquote>
-<p>But what happens if we pass non-uniform index to it? It works!<br>
-Now That's confusing.<br>
-Here's a sample on <a href="http://shader-playground.timjones.io/60ec03f77dfcbfa9f1951327cf80cede">Shader Playground</a>.</p>
-<p>As DXC just gives</p>
-<pre><code>%6 = call i32 @dx.op.waveReadLaneAt.i32(i32 117, i32 %2, i32 %5)
-</code></pre><p>My guess is it doesn't actually check whether a variable is uniform or not, thus no error is reported.<br>
-So why the restriction in the first place?</p>
-<p><a href="https://twitter.com/SebAaltonen/status/1095183824290484226">https://twitter.com/SebAaltonen/status/1095183824290484226</a></p>
-<blockquote>
-<p>WaveReadLaneAt must have wave uniform index. Docs say so. SM 6.0 wave intrinsics were modeled after GCN2 hardware (original Xbox One). GCN3 additions (DS_PERMUTE) and Nvidia/Intel equivalents are not exposed. GCN3+ and all Nvidia/Intel DX12 HW support full per lane stuffle.</p>
-</blockquote>
-<p>Turn out it needs a specific instruction to perform on non-uniform index.<br>
-And it becomes a shuffle rather than a broadcast.<br>
-In GLSL/Vulkan, <code>subgroupBroadcast</code> and <code>subgroupShuffle</code> are well defined.<br>
-As described in <a href="https://www.khronos.org/assets/uploads/developers/library/2018-vulkan-devday/06-subgroups.pdf">HLSL/GLSL/SPRI-V mapping</a></p>
-<p>I checked on my Intel HD Graphics 620 (26.20.100.7639) and NVIDIA GeForce RTX 2070 (27.21.14.5638).<br>
-They behave like a shuffle and the results seem alright.<br>
-I'm curious about what will driver do if hardware just don't support shuffle.<br>
-Luckily for AMD we have the <a href="https://github.com/GPUOpen-Tools/radeon_gpu_analyzer">Radeon GPU Analyzer</a>.<br>
-I ran RGA on a AMD Radeon R9 Fury, not sure if the results will vary on GPU or driver though.<br>
-For gfx1010, it generate <code>ds_bpermute_b32</code>, which is a shuffle as mentioned in the twitter thread.<br>
-For gfx702, GCN2, the generated code is much longer. <a href="https://pastebin.com/gr0ivzg3">Pastebin</a>.</p>
-<pre><code>// The HLSL might look like this
+Here are some workarounds/solutions about pitfalls when dealing with HLSL.
+
+# FXC / DXC
+
+## NonUniformResourceIndex
+
+According to [Microsoft Docs](https://docs.microsoft.com/en-us/windows/win32/direct3d12/resource-binding-in-hlsl#resource-types-and-arrays), one needs to add the `NonUniformResourceIndex` when accessing array with non-uniform index.
+
+The evil part is, even if you don't follow the instruction, compiler won't complain about it. Then you might get incorrect results.
+
+Further detail can be found at [Direct3D 12 - Watch out for non-uniform resource index! by Adam Sawicki](https://www.asawicki.info/news_1608_direct3d_12_-_watch_out_for_non-uniform_resource_index).
+
+Also, [PORTING DETROIT: BECOME HUMAN FROM PLAYSTATION® 4 TO PC – PART 2](https://gpuopen.com/learn/porting-detroit-2/) mentioned this keyword (with annotated ISA!).
+
+## WaveReadLaneAt
+
+Since Microsoft has a update to the documents on [WaveReadLaneAt](https://github.com/MicrosoftDocs/win32/commit/803a98ea702c4fcf8ba2b80e5ab1bca54ebfa05a#diff-64753bb1ca6424ec22c87245f67a8a9b) on Jun 2020,  
+I split this section into 2 parts to keep up with the latest version and also keep some old observations.
+
+### After Document Update
+
+> The resulting value is the result of expr. It will be uniform if laneIndex is uniform.
+
+Now it's clear `WaveReadLaneAt` supports both uniform or non-uniform laneIndex.
+
+Here's the commit message,
+
+> The HLSL compiler team has agreed to this change, which is more consistent with the later specifications, but failed to update this document.
+
+It is hard to say having one function to work in both scenarios is good or bad. This relates to the facts that the uniformness is already quite unclear in DXIL, and lane count is hardware-dependent if not driver-dependent.
+
+[Which Values Are Scalar in a Shader? by Adam Sawicki](https://asawicki.info/news_1734_which_values_are_scalar_in_a_shader) have a wider discussion over it. It's also where I learned about this udpate.
+
+### Before Document Update
+
+Before, the document page says,
+
+> The input lane index must be uniform across the wave.  
+> This function is effectively a broadcast of the value in the laneIndex’th lane.  
+
+But what happens if we pass non-uniform index to it? It works!  
+Now That's confusing.  
+Here's a sample on [Shader Playground](http://shader-playground.timjones.io/60ec03f77dfcbfa9f1951327cf80cede).  
+
+As DXC just gives
+```
+%6 = call i32 @dx.op.waveReadLaneAt.i32(i32 117, i32 %2, i32 %5)
+```
+My guess is it doesn't actually check whether a variable is uniform or not, thus no error is reported.  
+So why the restriction in the first place?
+
+https://twitter.com/SebAaltonen/status/1095183824290484226
+> WaveReadLaneAt must have wave uniform index. Docs say so. SM 6.0 wave intrinsics were modeled after GCN2 hardware (original Xbox One). GCN3 additions (DS_PERMUTE) and Nvidia/Intel equivalents are not exposed. GCN3+ and all Nvidia/Intel DX12 HW support full per lane stuffle.
+
+Turn out it needs a specific instruction to perform on non-uniform index.  
+And it becomes a shuffle rather than a broadcast.  
+In GLSL/Vulkan, `subgroupBroadcast` and `subgroupShuffle` are well defined.  
+As described in [HLSL/GLSL/SPRI-V mapping](https://www.khronos.org/assets/uploads/developers/library/2018-vulkan-devday/06-subgroups.pdf)  
+
+I checked on my Intel HD Graphics 620 (26.20.100.7639) and NVIDIA GeForce RTX 2070 (27.21.14.5638).  
+They behave like a shuffle and the results seem alright.  
+I'm curious about what will driver do if hardware just don't support shuffle.  
+Luckily for AMD we have the [Radeon GPU Analyzer](https://github.com/GPUOpen-Tools/radeon_gpu_analyzer).  
+I ran RGA on a AMD Radeon R9 Fury, not sure if the results will vary on GPU or driver though.  
+For gfx1010, it generate `ds_bpermute_b32`, which is a shuffle as mentioned in the twitter thread.  
+For gfx702, GCN2, the generated code is much longer. [Pastebin](https://pastebin.com/gr0ivzg3).  
+```
+// The HLSL might look like this
 // Every lane keeps checking till itself becomes the first lane, then do the actual work. Nice trick
 while (true)
 {
@@ -183,81 +84,66 @@ while (true)
 		break;
 	}
 }
-</code></pre><p>A full sample in <a href="http://shader-playground.timjones.io/2fc43f77f626c4883e1b1ed23fd8b2e1">Shader Playground</a><br>
-Somehow an extra if is needed for DXC to generate a loop correctly&hellip;</p>
-<p>NVIDIA equivalent seems to be <code>NvShfl/shuffleNV</code> described as <strong>Indexed Any-to-Any Shuffle</strong> in <a href="https://developer.nvidia.com/reading-between-threads-shader-intrinsics">Reading Between The Threads: Shader Intrinsics</a>.</p>
-<hr>
-<h2 id="globallycoherent">globallycoherent</h2>
-<p>The <a href="https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/sm5-object-rwstructuredbuffer">document</a> describes this this keyword as</p>
-<blockquote>
-<p>RWStructuredBuffer objects can be prefixed with the storage class globallycoherent. This storage class causes memory barriers and syncs to flush data across the entire GPU such that other groups can see writes. Without this specifier, a memory barrier or sync will only flush a UAV within the current group.</p>
-</blockquote>
-<p>More detail can be found in <a href="https://microsoft.github.io/DirectX-Specs/d3d/archive/D3D11_3_FunctionalSpec.htm#7.14.4%20Global%20vs%20Group/Local%20Coherency%20on%20Non-Atomic%20UAV%20Reads">(DirectX-Specs) Global vs Group/Local Coherency on Non-Atomic UAV Reads</a></p>
-<p>As it is not so intuitive on when the prefix should be used,<br>
-I made <a href="https://github.com/silvesthu/ComputeShaderPlayground/blob/globallycoherent/Shader.hlsl">a sample</a> to check when it must be used to ensure correctness.</p>
-<p>The sample works as,</p>
-<ul>
-<li>Group 0 write uav</li>
-<li>Group 1 do some heavy lifting to wait for Group 0</li>
-<li>Group 1 write uav <strong>(this write will be ignored by later read if globallycoherent is not used)</strong></li>
-<li>Group 0 wait on Group 1 with a counter</li>
-<li>Group 0 read uav</li>
-</ul>
-<p>I assume the underlying issue is, UAV access is L1 coherent by default,<br>
-and during shader execution, there is no other way to flush L1, bypass is a reasonable choice.<br>
-Test results on my RTX 2070 even suggested that,<br>
-globallycoherent is likely to make UAV access bypass L1, even if barrier is absent. <br>
-Strictly speaking, L1 is per SM on RTX and is not directly mapped to shader group either,<br>
-but it is still more intuitive to understand globallycoherent from cache hierarchy.</p>
-<p>Practically, globallycoherent might not be necessary in most cases,<br>
-e.g. Atomic operations ensure global coherence by themselves.<br>
-But multi-phase processing, like mip pyramid generation in reference,<br>
-is where globallycoherent should be taken into consideration.</p>
-<p><strong>Reference</strong></p>
-<ul>
-<li><a href="https://twitter.com/sebaaltonen/status/1115717152244420608">Related discussion on twitter</a></li>
-<li><a href="https://gist.github.com/sebbbi/6cfbec7ab343924dad9b7ee48ef3ba6c">Single pass globallycoherent mip pyramid generation by @SebAaltonen</a></li>
-</ul>
+```
+A full sample in [Shader Playground](http://shader-playground.timjones.io/2fc43f77f626c4883e1b1ed23fd8b2e1)  
+Somehow an extra if is needed for DXC to generate a loop correctly...  
 
-    
-    <div class="nav-next-prev">
-        <div class="nav-prev">
-            
-                <a href="https://silvesthu.github.io/posts/2020/05/wave-intrinsics-hello-world/"><i class="fas fa-chevron-left"></i></a>
-            
-        </div>
-        <a class="nav-top" href="#">top</i></a>
-        <div class="nav-next">
-            
-                <a href="https://silvesthu.github.io/posts/2020/10/tools-for-debugging-device-removed/"><i class="fas fa-chevron-right"></i></a>
-            
-        </div>
-    </div>
-    
+NVIDIA equivalent seems to be `NvShfl/shuffleNV` described as "Indexed Any-to-Any Shuffle" in [Reading Between The Threads: Shader Intrinsics](https://developer.nvidia.com/reading-between-threads-shader-intrinsics).  
 
-            </div><footer>
+## globallycoherent
 
-<div class="footer-content">
+The [document](https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/sm5-object-rwstructuredbuffer) describes this this keyword as
 
-  <div class="contact-info">
-      
-      
-  </div>
+> RWStructuredBuffer objects can be prefixed with the storage class globallycoherent. This storage class causes memory barriers and syncs to flush data across the entire GPU such that other groups can see writes. Without this specifier, a memory barrier or sync will only flush a UAV within the current group.
 
+More detail can be found in [(DirectX-Specs) Global vs Group/Local Coherency on Non-Atomic UAV Reads](https://microsoft.github.io/DirectX-Specs/d3d/archive/D3D11_3_FunctionalSpec.htm#7.14.4%20Global%20vs%20Group/Local%20Coherency%20on%20Non-Atomic%20UAV%20Reads)
 
-</div>
+As it is not so intuitive on when the prefix should be used,  
+I made [a sample](https://github.com/silvesthu/ComputeShaderPlayground/blob/globallycoherent/Shader.hlsl) to check when it must be used to ensure correctness.  
 
-<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
-</script>
-<script type="text/x-mathjax-config">
-MathJax.Hub.Config({
-  tex2jax: {
-    inlineMath: [['$','$']]
-  }
-});
-</script>
+The sample works as,
+- Group 0 write uav
+- Group 1 do some heavy lifting to wait for Group 0
+- Group 1 write uav (this write will be ignored by later read if globallycoherent is not used)
+- Group 0 wait on Group 1 with a counter
+- Group 0 read uav
 
-</footer></main>
-    </body>
-    <script src=https://silvesthu.github.io/js/navbutton.js></script>
-</html>
+I assume the underlying issue is, UAV access is L1 coherent by default, and during shader execution, there is no other way to flush L1, bypass is a reasonable choice. 
+
+Test results on my RTX 2070 even suggested that, globallycoherent is likely to make UAV access bypass L1, even if barrier is absent. Strictly speaking, L1 is per SM on RTX and is not directly mapped to shader group either, but it is still more intuitive to understand globallycoherent from cache hierarchy.  
+
+Practically, globallycoherent might not be necessary in most cases, e.g. Atomic operations ensure global coherence by themselves. But multi-phase processing, like mip pyramid generation in reference, is where globallycoherent should be taken into consideration.  
+
+### Reference
+
+- [Related discussion on twitter](https://twitter.com/sebaaltonen/status/1115717152244420608)
+- [Single pass globallycoherent mip pyramid generation by @SebAaltonen](https://gist.github.com/sebbbi/6cfbec7ab343924dad9b7ee48ef3ba6c)
+
+# FXC-only
+
+## Denormalized float, small float/large uint
+
+**This is a FXC only issue.**  
+
+First, there is `asfloat(0x7FFFFF) => 0` from  
+[Low-level Shader Optimization for Next-Gen and DX11 by Emil Persson](https://www.slideshare.net/DevCentralAMD/lowlevel-shader-optimization-for-nextgen-and-dx11-by-emil-persson).  
+That is, `asfloat` always gives 0 if you feed bits fit denormalized pattern.  
+
+Then, floats smaller than 1e-6 won't make their way into output.  
+`return 1e-7; => return 0;`  
+I wonder how one can write to a R32_FLOAT correctly.  
+[ShaderPlayground](http://shader-playground.timjones.io/a0d2300aa58d50ccf28afdd8b66edf7a)  
+
+Similarly, uint equal or larger than 0x00800000 (24 bit),  
+`return 0x00800000; => return 0;`  
+[ShaderPlayground](http://shader-playground.timjones.io/195e9f0e3b92cd603fd4a604fdebe72f)  
+
+Unlike the denormalized case,  
+small float/large uint stay alive during the calculation.  
+It only becomes a problem when exporting them, to render target or UAV.  
+
+At least compile-time constants acts in the same way.  
+
+[Back to Homepage](/../../../../)
+
+<!-- Markdeep: --><style class="fallback">body{visibility:hidden;white-space:pre;font-family:monospace}</style><script src="markdeep.min.js" charset="utf-8"></script><script src="https://morgan3d.github.io/markdeep/latest/markdeep.min.js?" charset="utf-8"></script><script>window.alreadyProcessedMarkdeep||(document.body.style.visibility="visible")</script>

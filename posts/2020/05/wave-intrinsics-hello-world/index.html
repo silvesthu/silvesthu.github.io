@@ -1,238 +1,89 @@
-<!DOCTYPE html>
-<html><head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="blog, game, graphics, programming">
-    <meta name="Author" content="Ken Hu">
-    <meta name="keywords" content="blog, game, graphics, programming">
-    <link rel="stylesheet" href=https://silvesthu.github.io/css/syntax.css>
-    <link rel="stylesheet" href=https://silvesthu.github.io/css/style.css>
-    <script src="https://kit.fontawesome.com/1b7478c139.js" crossorigin="anonymous"></script>
-    <title>Indefinite Seven</title>
-  </head><body><aside id="sidenav">
-    <header>
-    
+<meta lang="en" charset="utf-8">
+<meta property="og:title" content="Wave Intrinsics Hello World" />
+<meta property="og:type" content="website">
+<meta property="og:description" content="Indefinite Seven">
 
-    <a id="branding" href=https://silvesthu.github.io/>
-        
-            Indefinite Seven
-        
-    </a>
-    <div>GameDev & Graphics</div>
-    <br/>
-    </header>
+**Wave Intrinsics Hello World**
+		2020/05/09
 
-    <nav>
-        
-            		
-            <a href="/posts/"
-                
-            >
-                <i class="fas fa-keyboard fa-ms"></i>
-                <span>Posts</span>
-            </a>
-        
-            		
-            <a href="/tags"
-                
-            >
-                <i class="fas fa-tags fa-ms"></i>
-                <span>Tags</span>
-            </a>
-        
-            		
-            <a href="/index.xml"
-                
-            >
-                <i class="fas fa-rss fa-ms"></i>
-                <span>RSS</span>
-            </a>
-        
-            		
-            <a href="https://github.com/silvesthu"
-                
-                    target="_blank"
-                
-            >
-                <i class="fab fa-github fa-ms"></i>
-                <span>Github</span>
-            </a>
-        
-            		
-            <a href="https://twitter.com/kenhu07"
-                
-                    target="_blank"
-                
-            >
-                <i class="fab fa-twitter fa-ms"></i>
-                <span>Twitter</span>
-            </a>
-        
-    </nav>
-</aside>
-<main id="main">
-            <a href="javascript:void(0)" id="closebtn" onclick="navToggle()"><i class="fas fa-bars fa-lg"></i></a>
-            <div class="content">
-    
-    <h1 id="title">Wave Intrinsics Hello World</h1>
-    
-    
-       <i class="far fa-calendar-alt"></i> May 9 2020
-    
-    
-    <nav id="TableOfContents">
-  <ul>
-    <li><a href="#result">Result</a></li>
-    <li><a href="#disassembly--shader-analayzer">Disassembly & Shader Analayzer</a></li>
-    <li><a href="#work-with-profiler">Work with profiler</a></li>
-    <li><a href="#reference">Reference</a></li>
-  </ul>
-</nav>
-    <hr />
-    <p>After work with DirectX 12 for a while,<br>
-with some need to validate shader using <a href="https://github.com/Microsoft/DirectXShaderCompiler/wiki/Wave-Intrinsics"><strong>Wave Intrinsics</strong></a>,<br>
-I wrote a hello world as a playground.</p>
-<p>To keep things simple, here are some decisions made in advance.</p>
-<ul>
-<li>Wave Intrinsics
-<ul>
-<li>DirectX 12</li>
-<li>Shader Model 6.0+
-<ul>
-<li>DirectXShaderCompiler (DXC)</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>Minimal setup
-<ul>
-<li>Console program
-<ul>
-<li>No window</li>
-<li>No swapchain</li>
-<li>No render loop</li>
-</ul>
-</li>
-<li>Compute Shader only</li>
-<li>No descriptor heap</li>
-<li>Minimum abstraction</li>
-<li>No error handling (except shader compilation)</li>
-</ul>
-</li>
-<li>Debugging
-<ul>
-<li>Read back output through UAV</li>
-<li>printf</li>
-</ul>
-</li>
-</ul>
-<h2 id="result">Result</h2>
-<p>Here is the repo <a href="https://github.com/silvesthu/ComputeShaderPlayground">ComputeShaderPlayground</a> on Github.<br>
-With only a cpp and a hlsl each.<br>
-Suprisingly, console program run just well.</p>
-<p>The hlsl is just a placeholder, and structure of cpp is like</p>
-<ul>
-<li>Compile shader file to <code>IDxcBlob</code></li>
-<li>Initialize DirectX 12 with <code>IDXGIFactory4</code> -&gt; <code>IDXGIAdapter1</code> -&gt; <code>ID3D12Device2</code></li>
-<li>Create resources with <code>ID3D12Device2</code>
-<ul>
-<li><code>ID3D12CommandQueue</code></li>
-<li><code>ID3D12CommandAllocator</code></li>
-<li><code>ID3D12GraphicsCommandList</code></li>
-<li><code>ID3D12RootSignature</code> -&gt; <code>ID3D12PipelineState</code></li>
-<li><code>ID3D12Resource</code> as UAV</li>
-<li><code>ID3D12Resource</code> as Readback</li>
-</ul>
-</li>
-<li>Execute
-<ul>
-<li><code>SetComputeRootSignature</code></li>
-<li><code>SetPipelineState</code></li>
-<li><code>Dispatch</code></li>
-<li>Copy UAV to Readback</li>
-</ul>
-</li>
-<li>Print
-<ul>
-<li>Wait for GPU with <code>ID3D12Fence</code></li>
-<li>Lock Readback and print its content</li>
-</ul>
-</li>
-</ul>
-<h2 id="disassembly--shader-analayzer">Disassembly &amp; Shader Analayzer</h2>
-<p>Not quite related to the hello world itself though,<br>
-it is rather useful (also fun) to see how code is generated.<br>
-To be able to throw shader file directly into analyzer,<br>
-root signature is moved from cpp into HLSL.</p>
-<p><a href="http://shader-playground.timjones.io/">Shader Playground</a> provides most functionalities,<br>
-however it does not support shader analyzers for Shader Model 6.0+ yet.</p>
-<p><a href="https://github.com/jbarczak/pyramid">Pyramid</a> is another choice.<br>
-But as RGA requires AMD card for DX12 analysis,<br>
-it turn to offline mode for Vulkan with HLSL-&gt;SPIR-V which may not reflect original code.</p>
-<h2 id="work-with-profiler">Work with profiler</h2>
-<p>It's not too surprising that Nsight won't capture this console program.<br>
-So I created a branch <a href="https://github.com/silvesthu/ComputeShaderPlayground/tree/swap_chain">swap_chain</a>,<br>
-which has a dummy swap chain on console window, and a loop to presents frames.</p>
-<h2 id="reference">Reference</h2>
-<ul>
-<li><a href="https://github.com/microsoft/DirectX-Graphics-Samples">DirectX-Graphics-Samples</a>
-<ul>
-<li>Official samples by features</li>
-<li>Abstraction and error handling make code difficult to read</li>
-</ul>
-</li>
-<li><a href="https://www.3dgep.com/learning-directx-12-1">Learning DirectX 12 – Lesson 1 – Initialize DirectX 12</a>
-<ul>
-<li>A thorough tutorial (even topics like resize, fullscreen, dpi are well covered)</li>
-<li>A bit too long for lesson 1</li>
-</ul>
-</li>
-<li><a href="https://asawicki.info/news_1719_two_shader_compilers_of_direct3d_12">Two Shader Compilers of Direct3D 12</a>
-<ul>
-<li>Usage of dxc and fxc, both online and offline</li>
-</ul>
-</li>
-</ul>
+After work with DirectX 12 for a while, I need to do some validate on shader using [**Wave Intrinsics**](https://github.com/Microsoft/DirectXShaderCompiler/wiki/Wave-Intrinsics), so I created a playground program.  
 
-    
-    <div class="nav-next-prev">
-        <div class="nav-prev">
-            
-                <a class="grayed-out" href="javascript:void()"><i class="fas fa-chevron-left"></i></a>
-            
-        </div>
-        <a class="nav-top" href="#">top</i></a>
-        <div class="nav-next">
-            
-                <a href="https://silvesthu.github.io/posts/2020/05/hlsl-pitfalls/"><i class="fas fa-chevron-right"></i></a>
-            
-        </div>
-    </div>
-    
+To keep things simple, here are some decisions made in advance,
 
-            </div><footer>
+- Wave Intrinsics
+	- DirectX 12
+	- Shader Model 6.0+
+		- DirectXShaderCompiler (DXC)
+- Minimal setup
+	- Console program
+		- No window
+		- No swapchain
+		- No render loop
+	- Compute Shader only
+	- No descriptor heap
+	- Minimum abstraction
+	- No error handling (except shader compilation)
+- Debugging
+	- Read back output through UAV
+	- printf
 
-<div class="footer-content">
+# Result
 
-  <div class="contact-info">
-      
-      
-  </div>
+Here is the repo [ComputeShaderPlayground](https://github.com/silvesthu/ComputeShaderPlayground) on Github.  
+With only a cpp and a hlsl each.  
+Suprisingly, console program run just well.  
 
+The hlsl is just a placeholder, and structure of cpp is like,
 
-</div>
+- Compile shader file to `IDxcBlob`
+- Initialize DirectX 12 with `IDXGIFactory4` -> `IDXGIAdapter1` -> `ID3D12Device2`
+- Create resources with `ID3D12Device2`
+	- `ID3D12CommandQueue`
+	- `ID3D12CommandAllocator`
+	- `ID3D12GraphicsCommandList`
+	- `ID3D12RootSignature` -> `ID3D12PipelineState`
+	- `ID3D12Resource` as UAV
+	- `ID3D12Resource` as Readback
+- Execute
+	- `SetComputeRootSignature`
+	- `SetPipelineState`
+	- `Dispatch`
+	- Copy UAV to Readback
+- Print
+	- Wait for GPU with `ID3D12Fence`
+	- Lock Readback and print its content
 
-<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
-</script>
-<script type="text/x-mathjax-config">
-MathJax.Hub.Config({
-  tex2jax: {
-    inlineMath: [['$','$']]
-  }
-});
-</script>
+## Work with debugging tools
 
-</footer></main>
-    </body>
-    <script src=https://silvesthu.github.io/js/navbutton.js></script>
-</html>
+It's not too surprising that Nsight won't capture this console program.  
+So I created a branch [swap_chain](https://github.com/silvesthu/ComputeShaderPlayground/tree/swap_chain),  
+which has a dummy swap chain on console window, and a loop to presents frames. 
+
+# Disassembly & Shader Analayzer
+
+Not quite related to the hello world itself though,  
+it is rather useful (also fun) to see how code is generated.  
+To be able to throw shader file directly into analyzer,  
+root signature is moved from cpp into HLSL.  
+
+[Shader Playground](http://shader-playground.timjones.io/) provides most functionalities,  
+however it does not support shader analyzers for Shader Model 6.0+ yet.  
+
+[Pyramid](https://github.com/jbarczak/pyramid) is another choice.  
+But as RGA requires AMD card for DX12 analysis,  
+it turn to offline mode for Vulkan with HLSL->SPIR-V which may not reflect original code.
+
+# Reference
+
+- [DirectX-Graphics-Samples](https://github.com/microsoft/DirectX-Graphics-Samples)
+	- Official samples by features
+	- Abstraction and error handling make code difficult to read
+- [Learning DirectX 12 – Lesson 1 – Initialize DirectX 12](https://www.3dgep.com/learning-directx-12-1)
+	- A thorough tutorial (even topics like resize, fullscreen, dpi are well covered)
+	- A bit too long for lesson 1
+- [Two Shader Compilers of Direct3D 12](https://asawicki.info/news_1719_two_shader_compilers_of_direct3d_12)
+	- Usage of dxc and fxc, both online and offline
+
+[Back to Homepage](/../../../../)
+
+<!-- Markdeep: --><style class="fallback">body{visibility:hidden;white-space:pre;font-family:monospace}</style><script src="markdeep.min.js" charset="utf-8"></script><script src="https://morgan3d.github.io/markdeep/latest/markdeep.min.js?" charset="utf-8"></script><script>window.alreadyProcessedMarkdeep||(document.body.style.visibility="visible")</script>
