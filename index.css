@@ -1,0 +1,1 @@
+@media screen and (min-width: 65em) {.md .longTOC, .md .mediumTOC, .md .shortTOC { max-width: 20%; width: 20%; float: left; position: fixed; left: calc(50% + 28em); margin-right: 5px; top: 5%; }}

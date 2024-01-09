@@ -1,39 +1,103 @@
 <meta lang="en" charset="utf-8">
-<meta property="og:title" content="HLSL pitfalls" />
+<meta property="og:site_name" content="Indefinite Seven" />
 <meta property="og:type" content="website">
-<meta property="og:description" content="Indefinite Seven">
+<meta property="og:title" content="HLSL pitfalls" />
+<meta property="og:description" content="HLSL pitfalls">
+<link rel="stylesheet" href="./../../../../index.css">
 
 **HLSL pitfalls**
 		2020/05/24
 
-Here are some workarounds/solutions about pitfalls when dealing with HLSL.
+Here are pitfalls when dealing with HLSL, along with workarounds if available.<br/>
+
+# DXC
+
+## Uninitialized variables
+
+Whether compiler gives warning depends on how the variables are used.<br/>
+Control flow and struct might also complicate things a bit sometimes.<br/>
+
+### Vertex / Pixel Shader Output
+
+Normally warning like this is displayed, and output operation is just skipped.<br/>
+`-WX` should be able to catch most of the cases.<br/>
+```
+float4 main() : SV_TARGET0
+{
+    float4 x;
+    return x;
+}
+
+warning: Declared output SV_Target0 not fully written in shader. 
+```
+
+When the uninitialized variable is used in some calculation before output,<br/>
+the compiler might no longer be able to detect the usage, and leave an `undef` in DXIL.<br/>
+The actual behavior may varies on GPU and driver, and here is a sample.<br/>
+
+![](1.png width="400px")
+
+### UAV Output
+
+Slightly different from vertex / pixel shader, validation error is triggered for UAV.
+```
+RWBuffer<float> Output : register(u0);
+[numthreads(64, 1, 1)]
+void main(uint3 inDispatchThreadID : SV_DispatchThreadID)
+{
+    float x;
+    Output[inDispatchThreadID.x] = x;
+}
+
+error: validation errors
+<source>:6:34: error: Assignment of undefined values to UAV.
+note: at 'call void @dx.op.bufferStore.f32(i32 69, %dx.types.Handle %1, i32 %2, i32 undef, float undef, float undef, float undef, float undef, i8 15)' in block '#0' of function 'main'.
+Validation failed.
+```
+
+Again, when the uninitialized variable is used in some calculation before output,<br/>
+it compiles and leave an `undef` in DXIL.<br/>
+```
+RWBuffer<float> Output : register(u0);
+[numthreads(64, 1, 1)]
+void main(uint3 inDispatchThreadID : SV_DispatchThreadID)
+{
+    float x; x+=1;
+    Output[inDispatchThreadID.x] = x;
+}
+
+call void @llvm.dbg.value(metadata float fadd (float undef, float 1.000000e+00), i64 0, metadata !47, metadata !48), !dbg !49 ; var:"x" !DIExpression() func:"main"
+```
 
 # FXC / DXC
 
 ## NonUniformResourceIndex
 
-According to [Microsoft Docs](https://docs.microsoft.com/en-us/windows/win32/direct3d12/resource-binding-in-hlsl#resource-types-and-arrays), one needs to add the `NonUniformResourceIndex` when accessing array with non-uniform index.
+According to [Microsoft Docs](https://docs.microsoft.com/en-us/windows/win32/direct3d12/resource-binding-in-hlsl#resource-types-and-arrays), <br/>
+`NonUniformResourceIndex` is needed when accessing array with non-uniform index.
 
-The evil part is, even if you don't follow the instruction, compiler won't complain about it. Then you might get incorrect results.
+However, even if you don't follow the instruction, <br/>
+compiler won't complain about it. Then you might get incorrect results.<br/>
 
-Further detail can be found at [Direct3D 12 - Watch out for non-uniform resource index! by Adam Sawicki](https://www.asawicki.info/news_1608_direct3d_12_-_watch_out_for_non-uniform_resource_index).
+Further detail can be found at<br/>
+[Direct3D 12 - Watch out for non-uniform resource index! by Adam Sawicki](https://www.asawicki.info/news_1608_direct3d_12_-_watch_out_for_non-uniform_resource_index).<br/>
 
-Also, [PORTING DETROIT: BECOME HUMAN FROM PLAYSTATION® 4 TO PC – PART 2](https://gpuopen.com/learn/porting-detroit-2/) mentioned this keyword (with annotated ISA!).
+Also, [PORTING DETROIT: BECOME HUMAN FROM PLAYSTATION® 4 TO PC](https://gpuopen.com/learn/porting-detroit-2/)<br/>
+mentioned this keyword (with annotated ISA!).<br/>
 
 ## WaveReadLaneAt
 
-Since Microsoft has a update to the documents on [WaveReadLaneAt](https://github.com/MicrosoftDocs/win32/commit/803a98ea702c4fcf8ba2b80e5ab1bca54ebfa05a#diff-64753bb1ca6424ec22c87245f67a8a9b) on Jun 2020,  
-I split this section into 2 parts to keep up with the latest version and also keep some old observations.
+This entry is no longer relevant after this [MicrosoftDocs](https://github.com/MicrosoftDocs/win32/commit/803a98ea702c4fcf8ba2b80e5ab1bca54ebfa05a#diff-64753bb1ca6424ec22c87245f67a8a9b) update.
 
 ### After Document Update
 
-> The resulting value is the result of expr. It will be uniform if laneIndex is uniform.
+> "The resulting value is the result of expr. It will be uniform if laneIndex is uniform."
 
 Now it's clear `WaveReadLaneAt` supports both uniform or non-uniform laneIndex.
 
 Here's the commit message,
 
-> The HLSL compiler team has agreed to this change, which is more consistent with the later specifications, but failed to update this document.
+> "The HLSL compiler team has agreed to this change, which is more consistent with the later specifications, but failed to update this document."
 
 It is hard to say having one function to work in both scenarios is good or bad. This relates to the facts that the uniformness is already quite unclear in DXIL, and lane count is hardware-dependent if not driver-dependent.
 
@@ -43,8 +107,8 @@ It is hard to say having one function to work in both scenarios is good or bad. 
 
 Before, the document page says,
 
-> The input lane index must be uniform across the wave.  
-> This function is effectively a broadcast of the value in the laneIndex’th lane.  
+> "The input lane index must be uniform across the wave."
+> "This function is effectively a broadcast of the value in the laneIndex’th lane."
 
 But what happens if we pass non-uniform index to it? It works!  
 Now That's confusing.  
@@ -58,7 +122,7 @@ My guess is it doesn't actually check whether a variable is uniform or not, thus
 So why the restriction in the first place?
 
 https://twitter.com/SebAaltonen/status/1095183824290484226
-> WaveReadLaneAt must have wave uniform index. Docs say so. SM 6.0 wave intrinsics were modeled after GCN2 hardware (original Xbox One). GCN3 additions (DS_PERMUTE) and Nvidia/Intel equivalents are not exposed. GCN3+ and all Nvidia/Intel DX12 HW support full per lane stuffle.
+> "WaveReadLaneAt must have wave uniform index. Docs say so. SM 6.0 wave intrinsics were modeled after GCN2 hardware (original Xbox One). GCN3 additions (DS_PERMUTE) and Nvidia/Intel equivalents are not exposed. GCN3+ and all Nvidia/Intel DX12 HW support full per lane stuffle."
 
 Turn out it needs a specific instruction to perform on non-uniform index.  
 And it becomes a shuffle rather than a broadcast.  
@@ -94,9 +158,9 @@ NVIDIA equivalent seems to be `NvShfl/shuffleNV` described as "Indexed Any-to-An
 
 The [document](https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/sm5-object-rwstructuredbuffer) describes this this keyword as
 
-> RWStructuredBuffer objects can be prefixed with the storage class globallycoherent. This storage class causes memory barriers and syncs to flush data across the entire GPU such that other groups can see writes. Without this specifier, a memory barrier or sync will only flush a UAV within the current group.
+> "RWStructuredBuffer objects can be prefixed with the storage class globallycoherent. This storage class causes memory barriers and syncs to flush data across the entire GPU such that other groups can see writes. Without this specifier, a memory barrier or sync will only flush a UAV within the current group."
 
-More detail can be found in [(DirectX-Specs) Global vs Group/Local Coherency on Non-Atomic UAV Reads](https://microsoft.github.io/DirectX-Specs/d3d/archive/D3D11_3_FunctionalSpec.htm#7.14.4%20Global%20vs%20Group/Local%20Coherency%20on%20Non-Atomic%20UAV%20Reads)
+More detail can be found in [Global vs Group/Local Coherency on Non-Atomic UAV Reads](https://microsoft.github.io/DirectX-Specs/d3d/archive/D3D11_3_FunctionalSpec.htm#7.14.4%20Global%20vs%20Group/Local%20Coherency%20on%20Non-Atomic%20UAV%20Reads)
 
 As it is not so intuitive on when the prefix should be used,  
 I made [a sample](https://github.com/silvesthu/ComputeShaderPlayground/blob/globallycoherent/Shader.hlsl) to check when it must be used to ensure correctness.  
@@ -112,7 +176,8 @@ I assume the underlying issue is, UAV access is L1 coherent by default, and duri
 
 Test results on my RTX 2070 even suggested that, globallycoherent is likely to make UAV access bypass L1, even if barrier is absent. Strictly speaking, L1 is per SM on RTX and is not directly mapped to shader group either, but it is still more intuitive to understand globallycoherent from cache hierarchy.  
 
-Practically, globallycoherent might not be necessary in most cases, e.g. Atomic operations ensure global coherence by themselves. But multi-phase processing, like mip pyramid generation in reference, is where globallycoherent should be taken into consideration.  
+Practically, globallycoherent might not be necessary in most cases, e.g. Atomic operations ensure global coherence by themselves.
+But multi-phase processing, like mip pyramid generation in reference, is where globallycoherent should be taken into consideration.
 
 ### Reference
 
@@ -125,24 +190,24 @@ Practically, globallycoherent might not be necessary in most cases, e.g. Atomic 
 
 **This is a FXC only issue.**  
 
-First, there is `asfloat(0x7FFFFF) => 0` from  
-[Low-level Shader Optimization for Next-Gen and DX11 by Emil Persson](https://www.slideshare.net/DevCentralAMD/lowlevel-shader-optimization-for-nextgen-and-dx11-by-emil-persson).  
-That is, `asfloat` always gives 0 if you feed bits fit denormalized pattern.  
+As described in [Low-level Shader Optimization for Next-Gen and DX11 by Emil Persson](https://www.slideshare.net/DevCentralAMD/lowlevel-shader-optimization-for-nextgen-and-dx11-by-emil-persson),<br/>
+`asfloat(0x7FFFFF) => 0`<br/>
+That is, `asfloat` always gives 0 if you feed bits fit denormalized pattern.<br/>
 
-Then, floats smaller than 1e-6 won't make their way into output.  
-`return 1e-7; => return 0;`  
-I wonder how one can write to a R32_FLOAT correctly.  
-[ShaderPlayground](http://shader-playground.timjones.io/a0d2300aa58d50ccf28afdd8b66edf7a)  
+Also, floats smaller than 1e-6 won't make their way into output.<br/>
+`return 1e-7; => return 0;`<br/>
+I wonder how one can write to a R32_FLOAT correctly.<br/>
+[ShaderPlayground](http://shader-playground.timjones.io/a0d2300aa58d50ccf28afdd8b66edf7a)<br/>
 
-Similarly, uint equal or larger than 0x00800000 (24 bit),  
-`return 0x00800000; => return 0;`  
-[ShaderPlayground](http://shader-playground.timjones.io/195e9f0e3b92cd603fd4a604fdebe72f)  
+Similarly, uint equal or larger than 0x00800000 (24 bit),<br/>
+`return 0x00800000; => return 0;`<br/>
+[ShaderPlayground](http://shader-playground.timjones.io/195e9f0e3b92cd603fd4a604fdebe72f)<br/>
 
-Unlike the denormalized case,  
-small float/large uint stay alive during the calculation.  
-It only becomes a problem when exporting them, to render target or UAV.  
+Unlike the denormalized case,<br/>
+small float/large uint stay alive during the calculation.<br/>
+It only becomes a problem when exporting them, to render target or UAV.<br/>
 
-At least compile-time constants acts in the same way.  
+At least compile-time constants acts in the same way.<br/>
 
 [Back to Index](./../../../../index.html)
 
