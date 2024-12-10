@@ -1,0 +1,158 @@
+<meta lang="en" charset="utf-8">
+<meta property="og:site_name" content="Indefinite Seven" />
+<meta property="og:type" content="website">
+<meta property="og:title" content="Path of Exile 2 Frame Analysis" />
+<meta property="og:image" content="Pasted%20image%2020241210232351.png">
+<meta property="og:description" content="Path of Exile 2 Frame Analysis">
+<link rel="stylesheet" href="https://fonts.googleapis.com/earlyaccess/notosanssc.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/earlyaccess/notosansjp.css">
+<link rel="stylesheet" href="./../../../../index.css">
+
+**Path of Exile 2 Frame Analysis**
+		2024/12/11
+
+# Intro
+
+- デバッグ用途であまりNsight使ったことないため
+- 各種情報がどこにあるか慣れてないところも多くて...
+- Nsightに慣れる練習として、試しにGraphics Studyのマネしてみた
+
+- 適当に書いてみたらあとで資料があるのを気づいたw
+- [ExileCon 2023 - Rendering Path of Exile 2](https://youtu.be/TrHHTQqmAaM)
+
+- ![](Pasted%20image%2020241210232351.png width=600)
+
+- フレーム概要
+	- Clearfell Encampment（ゲーム内マップ名）
+	- 1920 x 1080
+	- Event 57270 
+	- Draw 2785
+	- Dispatch 696
+	- Clear 14
+	- Signals 4
+	- Waits 5
+
+- 実際見てみたら
+	- CBV cpass/cpipeline/cobject のようなものになってるのが多くて参考にならない
+	- `StructuredBuffer` が多用されてるので、ものによってDXILから用途が読み取れる
+	- `ResolveQueryData` が使われてて、ある程度処理の区切りも推測できる
+		- Nsight filterではBlits枠になる
+	- Object BrowserからObject Usageからもある程度リソースの利用箇所を特定できる
+		- ただBindlessでもないのに、リストがあまり信用できない気もする
+
+それで時間軸順に、
+
+# Terrain Deformation?
+- Event: 16049
+- ![](Pasted%20image%2020241210231706.png width=600)
+
+# Tiled Light
+- Event: 16079
+- CBV: ctiledlights_assign
+	- ![](Pasted%20image%2020241210234944.png width=600)
+	- 30 x 17 なので、64x64 のタイル
+
+# Volume Simulation?
+- Event: 16087
+- CBV: cvolume_simulation
+- エッジ検出
+	- ![](Pasted%20image%2020241210234606.png width=600)
+	- 入力は模様からマップベースの情報？黄色が歩ける範囲
+- 28回 3枚pingpongで検出したエッジを拡散させる？
+	- ![](Pasted%20image%2020241210233354.png width=600)
+	- ![](Pasted%20image%2020241210233607.png width=600)
+	- 3枚でping pong
+	- R16G16B16A16_SINTはなかなか珍しい気がする
+- 使われるところが見当たらない...
+
+# Particle Emission?
+- Event: 16273
+- 大量な小さいDispatch (1~6,1,1) が続く、フレーム内Dispatchの数がほとんどこれ...
+- DXILから、ParticleEmitterData/BoneData/LUTData/ParticleDataなどの名前が入ってる
+
+# Cascade Shadow
+- Event: 21676 ~ 34193
+- ![](Pasted%20image%2020241211001422.png width=600)
+- 4Kなのに2Kしか使われてないのが設定次第かも
+
+# Depth Pass
+- Event: 34205 ~ 55378
+- ![](Pasted%20image%2020241211001624.png width=600)
+- 最後にdownsample, blur, minmaxなど
+
+# ScreenSpaceShadow
+- Event: 42545
+- CBV: cscreenspace_gi
+	- ShadowなのかGIなのか...
+- ![](Pasted%20image%2020241211003505.png width=600)
+- 120 x 67で作成、upsampling
+- 240 x 135で作成、SRC_COLORで↑と乗算、upsampling
+	- 初めて乗算ブレンド見かけた...
+- 480 x 270で作成、SRC_COLORで↑と乗算、upsampling
+- 960 x 540からさらにupsamplingして、終わり
+- 動画資料には↓こんな感じ
+- ![](Pasted%20image%2020241211014705.png width=600)
+
+# Mipschain?
+- Event: 42849
+- シェーダーは Resample/ApplyBlur/... など
+- DepthやHistoryなどの情報からmipchain作ってるように見える
+
+# GI
+- Event: 43684
+- CBV: cglobal_illumination_compute
+- (64,1,1) -> ... -> (64,24,1)
+	- ![](Pasted%20image%2020241211012912.png width=600)
+	- 例のRadiance Cascade？Cascadeになってることだけがわかる... 
+	- 合計6回のdispatchもCascadeごとに更新しているように見える
+	- 入力は、Depth, History, Cubemapのみ
+		- Cubemapも事前生成のものに見える
+	- [動画資料](https://youtu.be/TrHHTQqmAaM?si=vTwlbuvGOG_1Dbv2&t=2214) も似たような感じ
+	- ![](Pasted%20image%2020241211031025.png width=600)
+	- Cascadeを使ってること以外表現できる範囲はSSGIと結構近いかも？
+- (120, 135, 1)
+	- ![](Pasted%20image%2020241211020506.png width=600)
+	- おそらく出力を作成している、1920 x 1080 だけど 4 枚組
+
+# Forward Lighting
+- Event: 43761
+- RT0: Lighting
+	- ![](Pasted%20image%2020241211025426.png width=600)
+- RT1: Motion Vector
+- RT2: Lighting、おそらくGI用？RT0と比べて真っ黒の部分もあって光ってる部分もある
+	- ![](Pasted%20image%2020241211025340.png width=600)
+- 複数ステージがあるみたい
+	- メインの部分の描画
+	- RT2抜きBlend付き描画、おそらくDecal的な
+	- RT0のコピーを作る
+	- RT2抜きBlend付き描画、おそらく半透明
+
+# Screen Space Effect
+- Event: 54036
+- Screen Space ?
+	- 描画範囲と見た目からだとモデルに付けるbloomか、Fogへのライティングか
+- Screen Space Fog
+
+# Effect
+- Event: 54256
+- RT0: Lighting
+- RT1: Lighting（おそらくGI用）
+- 途中RT0コピー挟んでるが、おそらく歪み用
+- 謎のoffscreen RT、マイナス値も入ってるし、模様から歪み用のvectorかも
+	- ![](Pasted%20image%2020241211025918.png width=600)
+- 最後に全部合成
+
+# Post Process
+- Event: 55418
+- Bloom
+- Minimap
+- LUT
+	- Neutralに近いものもあるが、こういうのが初めてみた...
+	- ![](Pasted%20image%2020241211030758.png width=600)
+- Tonemap（たぶん）
+- UI
+- 特に変わったものない見つかってない
+
+終わり！
+
+<!-- Markdeep: --><style class="fallback">body{visibility:hidden;white-space:pre;font-family:monospace}</style><script src="markdeep.min.js" charset="utf-8"></script><script src="https://morgan3d.github.io/markdeep/latest/markdeep.min.js?" charset="utf-8"></script><script>window.alreadyProcessedMarkdeep||(document.body.style.visibility="visible")</script>
