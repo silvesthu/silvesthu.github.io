@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>sRGB &lt;=&gt; Linear RGB Converter (by ChatGPT)</title>
+  <link rel="stylesheet" href="./../index.css">
+  <body style="
+    padding-left: 100px;
+    padding-top: 80px;">
+</head>
+<body>
+
+  <span class="md">
+
+    <h1>sRGB &lt;=&gt; Linear RGB Converter (by ChatGPT)</h1>
+
+    <div class="section">
+      <h2>sRGB to Linear RGB</h2>
+      <label><input type="checkbox" id="srgb01">Input in range [0–1]</label>
+      <br/><br/>
+      <label>R: <input type="number" id="sr" step="1" min="0" max="255" value="255"></label>
+      <label>G: <input type="number" id="sg" step="1" min="0" max="255" value="255"></label>
+      <label>B: <input type="number" id="sb" step="1" min="0" max="255" value="255"></label>
+      <p>Linear RGB: <span id="linearOutput"></span></p>
+    </div>
+
+    <div class="section">
+      <h2>Linear RGB to sRGB</h2>
+      <label>R: <input type="number" id="lr" min="0" max="1" step="0.01" value="1.00"></label>
+      <label>G: <input type="number" id="lg" min="0" max="1" step="0.01" value="1.00"></label>
+      <label>B: <input type="number" id="lb" min="0" max="1" step="0.01" value="1.00"></label>
+      <p>sRGB: <span id="srgbOutput"></span></p>
+    </div>
+
+    <a href="./../index.html">Back to Index</a>
+
+    <script>
+      function srgbToLinear(c) {
+        return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+      }
+
+      function linearToSrgb(c) {
+        return c <= 0.0031308
+          ? 12.92 * c
+          : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
+      }
+
+      function clamp(value, min, max) {
+        return Math.min(Math.max(value, min), max);
+      }
+
+      function updateLinearFromSrgb() {
+        const is01 = document.getElementById("srgb01").checked;
+        let r = parseFloat(document.getElementById("sr").value);
+        let g = parseFloat(document.getElementById("sg").value);
+        let b = parseFloat(document.getElementById("sb").value);
+
+        if (isNaN(r) || isNaN(g) || isNaN(b)) return;
+
+        const max = is01 ? 1 : 255;
+        r = clamp(r, 0, max);
+        g = clamp(g, 0, max);
+        b = clamp(b, 0, max);
+
+        if (!is01) {
+          r /= 255; g /= 255; b /= 255;
+        }
+
+        const lr = srgbToLinear(r).toFixed(9);
+        const lg = srgbToLinear(g).toFixed(9);
+        const lb = srgbToLinear(b).toFixed(9);
+        document.getElementById("linearOutput").textContent = `(${lr}, ${lg}, ${lb})`;
+      }
+
+      function updateSrgbFromLinear() {
+        let r = parseFloat(document.getElementById("lr").value);
+        let g = parseFloat(document.getElementById("lg").value);
+        let b = parseFloat(document.getElementById("lb").value);
+
+        if (isNaN(r) || isNaN(g) || isNaN(b)) return;
+
+        r = clamp(r, 0, 1);
+        g = clamp(g, 0, 1);
+        b = clamp(b, 0, 1);
+
+        const sr = linearToSrgb(r);
+        const sg = linearToSrgb(g);
+        const sb = linearToSrgb(b);
+
+        const output = `(${Math.round(sr * 255)}, ${Math.round(sg * 255)}, ${Math.round(sb * 255)})`;
+
+        document.getElementById("srgbOutput").textContent = output;
+      }
+
+      function updateSrgbInputRange() {
+        const is01 = document.getElementById("srgb01").checked;
+        const step = is01 ? "0.01" : "1";
+        const max = is01 ? "1" : "255";
+
+        ["sr", "sg", "sb"].forEach(id => {
+          const input = document.getElementById(id);
+          input.step = step;
+          input.max = max;
+          input.min = "0";
+        });
+
+        updateLinearFromSrgb();
+        updateSrgbFromLinear(); // update sRGB output formatting too
+      }
+
+      // Attach event listeners
+      ["sr", "sg", "sb", "srgb01"].forEach(id =>
+        document.getElementById(id).addEventListener("input", () => {
+          if (id === "srgb01") updateSrgbInputRange();
+          updateLinearFromSrgb();
+          updateSrgbFromLinear();
+        })
+      );
+
+      ["lr", "lg", "lb"].forEach(id =>
+        document.getElementById(id).addEventListener("input", updateSrgbFromLinear)
+      );
+
+      // Initialize
+      updateLinearFromSrgb();
+      updateSrgbFromLinear();
+    </script>
+
+  </span>
+
+</body>
+</html>
