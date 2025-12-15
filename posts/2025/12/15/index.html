@@ -1,0 +1,89 @@
+<meta lang="en" charset="utf-8">
+<meta property="og:site_name" content="Indefinite Seven" />
+<meta property="og:type" content="website">
+<meta property="og:title" content="Metal, From IOR to F0" />
+<meta property="og:description" content="Metal, From IOR to F0">
+<link rel="stylesheet" href="./../../../../index.css">
+
+**Metal, From IOR to F0**
+		2025/12/15
+
+# Metal $F_0$
+
+$F_0$, also known as
+- Fresnel reflectance at 0 degree
+- Base Color in metallic workflow
+- Specular Color in specular workflow
+is commonly used in realtime rendering.
+
+Metals in particular, have strong specular reflection relies on this $F_0$,<br/>
+It feels a bit uncomfortable not knowing if correct values are being used.<br/>
+
+While there are presentations/websites providing number for various metals,<br/>
+most don't provide exact references or method to calculate those.<br/>
+To make things worse, sometimes numbers from different sources don't agree with each other.<br/>
+
+# Data Sources
+
+Take gold (au) as example, here are some data sources I found,
+
+| Data Source                                                                                                                                                      | RGB                    | IOR Source                                                                                                                                                                      |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Autodesk - Arnold User Guide](https://help.autodesk.com/view/ARNOL/ENU/?guid=arnold_user_guide_ac_standard_surface_ac_standard_base_html#metalness)             | 0.944 0.776 0.373      |                                                                                                                                                                                 |
+| [Adobe - Metal material references](https://helpx.adobe.com/substance-3d-general/adobe-standard-material/metal-material-references.html)                         | 1.0000, 0.7099, 0.3148 |                                                                                                                                                                                 |
+| [physicallybased.info](https://physicallybased.info/)                                                                                                            | 1.059,0.773,0.307      | [refractiveindex.info](https://refractiveindex.info/)                                                                                                                           |
+| [Substance - The PBR Guide](https://www.adobe.com/learn/substance-3d-designer/web/the-pbr-guide-part-1)                                                          | 255, 226, 155 (sRGB)   |                                                                                                                                                                                 |
+| [Unreal - Physically Based Materials](https://dev.epicgames.com/documentation/en-us/unreal-engine/physically-based-materials-in-unreal-engine)                   | 1.000, 0.766, 0.336    |                                                                                                                                                                                 |
+| [Sébastien Lagarde 2011](https://seblagarde.wordpress.com/2011/08/17/feeding-a-physical-based-lighting-mode/)                                                    | 1, 0.765557, 0.336057  | [Filmetrics® Refractive Index Database](https://www.kla.com/products/instruments/refractive-index-database)<br>-> [Sopra Material Library](https://www.sspectra.com/sopra.html) |
+| Real-Time Rendering, 3rd Edition<br>[Naty Hoffman 2012](https://blog.selfshadow.com/publications/s2012-shading-course/hoffman/s2012_pbs_physics_math_slides.pdf) | 1.00, 0.71, 0.29       |                                                                                                                                                                                 |
+| [Naty Hoffman 2015](https://blog.selfshadow.com/publications/s2015-shading-course/hoffman/s2015_pbs_physics_math_slides.pdf)                                     | 1.022, 0.782, 0.344    |                                                                                                                                                                                 |
+| Real-Time Rendering, 4rd edition                                                                                                                                 | 1.000, 0.782, 0.344    |                                                                                                                                                                                 |
+
+The difference are likely from different IOR data sources, method for conversion.<br/>
+Also gold (au) has its own problem as its R is beyond sRGB gamut (>1), <br/>
+Some just clamp it and others are likely taking a normalization. <br/>
+
+As far as I can tell, there are these 2 major IOR sources, so I tried to convert myself first. <br/>
+The conversion process is already described at
+- [Sébastien Lagarde 2011](https://seblagarde.wordpress.com/2011/08/17/feeding-a-physical-based-lighting-mode/), also code sample "SL-GetSpecularColor" is provided
+- [Naty Hoffman 2020 p179](https://blog.selfshadow.com/publications/s2020-shading-course/hoffman/s2020_pbs_hoffman_slides.pdf)
+I use python lib [colour-science](https://www.colour-science.org/) to find if I could get same result matches any of above. <br/>
+The Jupiter notebook can be found [here](https://github.com/silvesthu/JupyterPlayground/blob/master/ColorScience/IOR_to_Reflectance.ipynb). <br/>
+
+![](1.png)
+Conversion process diagram from [Naty Hoffman 2020](https://blog.selfshadow.com/publications/s2020-shading-course/hoffman/s2020_pbs_hoffman_slides.pdf). <br/>
+Note it assume ACEScg color space with D60, <br/>
+while I'm using sRGB color space with D65 to match other references as possible.
+
+Again, take gold (au) as example,
+
+| RGB                              | RGB (normalized)          | IOR Source                                                                                                          |
+| -------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| 1.0253167, 0.72263797, 0.339647  | 1, 0.70479489, 0.33126058 | [refractiveindex.info](https://refractiveindex.info/)<br>Rakić 1988                                                 |
+| 1.02209157 0.78314987 0.34298173 | 1, 0.76622281, 0.3355685  | [Filmetrics® Refractive Index Database](https://www.kla.com/products/instruments/refractive-index-database/au/gold) |
+
+Result from [Filmetrics® Refractive Index Database](https://www.kla.com/products/instruments/refractive-index-database) do match [Sébastien Lagarde 2011](https://seblagarde.wordpress.com/2011/08/17/feeding-a-physical-based-lighting-mode/). <br/>
+Also value before normalization is almost identical as [Naty Hoffman 2015](https://blog.selfshadow.com/publications/s2015-shading-course/hoffman/s2015_pbs_physics_math_slides.pdf). <br/>
+
+Can't find matched data source for [refractiveindex.info](https://refractiveindex.info/), <br/>
+but still it seems more popular in CG community as I searched. <br/>
+There is even a specific shelf **Selected materials for 3D artists**. <br/>
+Various formats and [python interface](https://github.com/toftul/refractiveindex) are also provided. <br/>
+
+While real world materials are likely much more complex, <br/>
+and research data are likely modeled based on different assumptions, <br/>
+it still feels better to know where some of those values come from.
+
+# Related Topics
+
+There are many interesting talks and articles about Fresnel reflectance, <br/>
+[Naty Hoffman 2020](https://blog.selfshadow.com/publications/s2020-shading-course/hoffman/s2020_pbs_hoffman_slides.pdf) is particular a good read. <br/>
+Beyond $F_0$, there are also discussions about
+- Schlick Fresnel vs. Fresnel Equation
+- Edge tint, $F_{82}$, $F_{90}$
+that also have big impact on visual of metals.
+
+[Back to Index](./../../../../index.html)
+
+<!-- Markdeep options: --><script>markdeepOptions={tocStyle:'long'};</script>
+<!-- Markdeep: --><style class="fallback">body{visibility:hidden;white-space:pre;font-family:monospace}</style><script src="markdeep.min.js" charset="utf-8"></script><script src="https://morgan3d.github.io/markdeep/latest/markdeep.min.js" charset="utf-8"></script><script>window.alreadyProcessedMarkdeep||(document.body.style.visibility="visible")</script>
